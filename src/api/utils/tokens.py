@@ -1,0 +1,32 @@
+import uuid
+from datetime import datetime, timedelta, timezone
+
+import jwt
+
+from src.api.config.dbconfig import settings
+from src.api.core.exceptions.auth_exceptions import InvalidTokenException
+
+
+def create_token(data: dict, expires_delta: timedelta) -> str:
+    payload = data.copy()
+    now = datetime.now(timezone.utc)
+    payload.update({
+        "iat": now,
+        "exp": now + expires_delta,
+        "jti": str(uuid.uuid4()),
+    })
+    return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
+
+
+def decode_token(
+    token: str,
+    *,
+    expired_message: str = "Token has expired.",
+    invalid_message: str = "Token is invalid.",
+) -> dict:
+    try:
+        return jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+    except jwt.ExpiredSignatureError:
+        raise InvalidTokenException(expired_message)
+    except jwt.InvalidTokenError:
+        raise InvalidTokenException(invalid_message)
