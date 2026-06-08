@@ -1,0 +1,101 @@
+# src/api/core/services/department_service.py
+"""Department service: all business logic for IT Admin department management.
+
+Endpoints served (Section 3.5.2):
+  POST  /admin/departments          → create_department
+  GET   /admin/departments          → list_departments
+  GET   /admin/departments/:id      → get_department
+  PATCH /admin/departments/:id      → update_department
+"""
+
+import math
+from uuid import UUID
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.api.data.repositories.department_repository import DepartmentRepository
+from src.api.schemas.departments_schema import DepartmentCreate, DepartmentUpdate, DepartmentOut
+from src.api.schemas.listing_endpoints import DepartmentListResponse, PageParams
+from src.api.core.exceptions.department_exceptions import (
+    DepartmentNotFoundException,
+    DepartmentCodeAlreadyExistsException,
+    DepartmentNameAlreadyExistsException,
+    DepartmentHasActiveMembersException,
+)
+
+
+class DepartmentService:
+
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+    async def create_department(
+        self,
+        payload: DepartmentCreate,
+        created_by: UUID,
+    ) -> DepartmentOut:
+        repo = DepartmentRepository(self.session)
+
+        # Guard: department code must be unique (business key)
+        if await repo.get_by_code(payload.departmentcode):
+            raise DepartmentCodeAlreadyExistsException(payload.departmentcode)
+
+        # Guard: department name must be unique (UX sanity check)
+        if await repo.get_by_name(payload.departmentname):
+            raise DepartmentNameAlreadyExistsException(payload.departmentname)
+
+        dept = await repo.create(
+            departmentname=payload.departmentname,
+            departmentcode=payload.departmentcode.upper(),  # normalize to uppercase
+            description=payload.description,
+            isactive=payload.isactive,
+            createdby=created_by,
+        )
+        return DepartmentOut.model_validate(dept)
+
+    async def list_departments(self, params: PageParams) -> DepartmentListResponse:
+        repo = DepartmentRepository(self.session)
+        skip = (params.page - 1) * params.limit
+        departments, total = await repo.get_all(skip=skip, limit=params.limit)
+        pages = math.ceil(total / params.limit) if total > 0 else 1
+
+        return DepartmentListResponse(
+            items=[DepartmentOut.model_validate(d) for d in departments],
+            total=total,
+            page=params.page,
+            limit=params.limit,
+            pages=pages,
+        )
+
+    async def get_department(self, department_id: UUID) -> DepartmentOut:
+        repo = DepartmentRepository(self.session)
+        dept = await repo.get_by_id(department_id)
+        if not dept:
+            raise DepartmentNotFoundException(str(department_id))
+        return DepartmentOut.model_validate(dept)
+
+    async def update_department(
+        self,
+        department_id: UUID,
+        payload: DepartmentUpdate,
+    ) -> DepartmentOut:
+        repo = DepartmentRepository(self.session)
+        dept = await repo.get_by_id(department_id)
+        if not dept:
+            raise DepartmentNotFoundException(str(department_id))
+
+        updates = payload.model_dump(exclude_unset=True)
+
+        # Guard: if name is changing, ensure uniqueness
+        if "departmentname" in updates:
+            existing = await repo.get_by_name(updates["departmentname"])
+            if existing and existing.departmentid != department_id:
+                raise DepartmentNameAlreadyExistsException(updates["departmentname"])
+
+        # Guard: if deactivating, ensure no active members remain
+        if updates.get("isactive") is False:
+            if await repo.has_active_members(department_id):
+                raise DepartmentHasActiveMembersException()
+
+        dept = await repo.update(dept, updates)
+        return DepartmentOut.model_validate(dept)
