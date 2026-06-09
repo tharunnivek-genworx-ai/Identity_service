@@ -7,9 +7,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from datetime import datetime, timezone
 
-from src.api.data.models.postgres.departments import Department
-from src.api.data.models.postgres.mentors import Mentor
-from src.api.data.models.postgres.trainees import Trainee
+from src.api.data.models.postgres.Identity_models.departments import Department
+from src.api.data.models.postgres.Identity_models.mentors import Mentor
+from src.api.data.models.postgres.Identity_models.trainees import Trainee
 
 
 class DepartmentRepository:

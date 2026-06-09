@@ -14,9 +14,9 @@ from datetime import timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.data.repositories.auth_repository import AuthRepository
-from src.api.schemas.auth_schema import LoginRequest, LoginResponse, RefreshRequest
-from src.api.core.exceptions.auth_exceptions import (
+from src.api.data.repositories.identity_repository.auth_repository import AuthRepository
+from src.api.schemas.identity_schemas.auth_schema import LoginRequest, LoginResponse, RefreshRequest
+from src.api.core.exceptions.identity_exceptions.auth_exceptions import (
     InvalidCredentialsException,
     InvalidTokenException,
     TokenRevokedException,

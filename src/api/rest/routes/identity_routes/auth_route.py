@@ -7,8 +7,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.data.clients.postgres.database import get_db
-from src.api.core.services.auth_service import AuthService
-from src.api.schemas.auth_schema import (
+from src.api.core.services.identity_service.auth_service import AuthService
+from src.api.schemas.identity_schemas.auth_schema import (
     LoginRequest,
     LoginResponse,
     RefreshRequest,

@@ -7,7 +7,7 @@ from datetime import datetime, timezone, date
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
-from src.api.data.models.postgres.trainees import Trainee
+from src.api.data.models.postgres.Identity_models.trainees import Trainee
 
 
 class TraineeRepository:
