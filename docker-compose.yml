@@ -44,9 +44,12 @@ services:
     entrypoint: [".venv/bin/python", "-m", "alembic"]
     volumes:
       - ./alembic/versions:/app/alembic/versions
+      - ./alembic/env.py:/app/alembic/env.py   # live mount — no rebuild needed for env.py changes
+      - ./src:/app/src                           # live mount — no rebuild needed for model changes
     profiles:
       - migrations
     restart: "no"
+
 
   postgres:
     image: postgres:16
