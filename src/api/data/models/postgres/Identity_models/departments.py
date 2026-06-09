@@ -26,3 +26,4 @@ class Department(Base):
     created_by_admin = relationship("ITAdmin", back_populates="departments")
     mentors = relationship("Mentor", back_populates="department")
     trainees = relationship("Trainee", back_populates="department")
+    spaces = relationship("ESpace", back_populates="department")

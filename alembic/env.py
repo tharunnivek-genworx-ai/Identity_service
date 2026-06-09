@@ -5,9 +5,8 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from src.api.data.models.postgres.Identity_models import it_admin, mentors, revoked_token, trainees
+import src.api.data.models.postgres  # noqa: F401 — registers all models onto Base.metadata
 from src.api.data.clients.postgres.database import Base, build_database_url
-from src.api.data.models.postgres.Identity_models import departments  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
