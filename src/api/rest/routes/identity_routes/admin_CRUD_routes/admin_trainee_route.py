@@ -10,12 +10,12 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.core.services.trainee_service import TraineeService
+from src.api.core.services.identity_service.trainee_service import TraineeService
 from src.api.data.clients.postgres.database import get_db
 from src.api.rest.routes.dependencies import require_role
-from src.api.schemas.auth_schema import TokenPayload
-from src.api.schemas.listing_endpoints import PageParams, TraineeListResponse
-from src.api.schemas.trainees_schema import (
+from src.api.schemas.identity_schemas.auth_schema import TokenPayload
+from src.api.schemas.identity_schemas.listing_endpoints import PageParams, TraineeListResponse
+from src.api.schemas.identity_schemas.trainees_schema import (
     TraineeCreate,
     TraineeDeactivateRequest,
     TraineeOut,

@@ -8,10 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from datetime import datetime, timezone
 
-from src.api.data.models.postgres.it_admin import ITAdmin
-from src.api.data.models.postgres.mentors import Mentor
-from src.api.data.models.postgres.trainees import Trainee
-from src.api.data.models.postgres.revoked_token import RevokedToken
+from src.api.data.models.postgres.Identity_models.it_admin import ITAdmin
+from src.api.data.models.postgres.Identity_models.mentors import Mentor
+from src.api.data.models.postgres.Identity_models.trainees import Trainee
+from src.api.data.models.postgres.Identity_models.revoked_token import RevokedToken
 
 
 class AuthRepository:

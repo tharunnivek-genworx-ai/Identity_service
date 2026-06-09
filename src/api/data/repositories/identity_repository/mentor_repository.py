@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
-from src.api.data.models.postgres.mentors import Mentor
+from src.api.data.models.postgres.Identity_models.mentors import Mentor
 
 
 class MentorRepository:

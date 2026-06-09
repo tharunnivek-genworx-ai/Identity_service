@@ -14,11 +14,11 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.data.repositories.mentor_repository import MentorRepository
-from src.api.data.repositories.department_repository import DepartmentRepository
-from src.api.schemas.mentors_schema import MentorCreate, MentorOut, MentorDeactivateRequest, MentorReactivateRequest
-from src.api.schemas.listing_endpoints import MentorListResponse, PageParams
-from src.api.core.exceptions.mentor_exceptions import (
+from src.api.data.repositories.identity_repository.mentor_repository import MentorRepository
+from src.api.data.repositories.identity_repository.department_repository import DepartmentRepository
+from src.api.schemas.identity_schemas.mentors_schema import MentorCreate, MentorOut, MentorDeactivateRequest, MentorReactivateRequest
+from src.api.schemas.identity_schemas.listing_endpoints import MentorListResponse, PageParams
+from src.api.core.exceptions.identity_exceptions.mentor_exceptions import (
     MentorNotFoundException,
     MentorEmailAlreadyExistsException,
     MentorEmployeeIdAlreadyExistsException,
@@ -26,7 +26,7 @@ from src.api.core.exceptions.mentor_exceptions import (
     MentorAlreadyActiveException,
     TransferTargetNotFoundException,
 )
-from src.api.core.exceptions.department_exceptions import DepartmentNotFoundException
+from src.api.core.exceptions.identity_exceptions.department_exceptions import DepartmentNotFoundException
 from src.api.utils.password import hash_password
 
 
