@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 
+from src.api.rest.routes.identity_routes import admin_route, auth_route
 from src.api.rest.middleware.cors import setup_cors
-from src.api.rest.routes import admin_route, auth_route, health, sse, websocket
+from src.api.rest.routes import health, sse, websocket
 
 app = FastAPI(title="Identity Service")
 

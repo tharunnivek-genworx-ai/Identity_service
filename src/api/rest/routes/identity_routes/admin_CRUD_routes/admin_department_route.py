@@ -10,12 +10,12 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.core.services.department_service import DepartmentService
+from src.api.core.services.identity_service.department_service import DepartmentService
 from src.api.data.clients.postgres.database import get_db
 from src.api.rest.routes.dependencies import require_role
-from src.api.schemas.auth_schema import TokenPayload
-from src.api.schemas.departments_schema import DepartmentCreate, DepartmentOut, DepartmentUpdate
-from src.api.schemas.listing_endpoints import DepartmentListResponse, PageParams
+from src.api.schemas.identity_schemas.auth_schema import TokenPayload
+from src.api.schemas.identity_schemas.departments_schema import DepartmentCreate, DepartmentOut, DepartmentUpdate
+from src.api.schemas.identity_schemas.listing_endpoints import DepartmentListResponse, PageParams
 
 router = APIRouter(prefix="/admin/departments", tags=["IT Admin"])
 

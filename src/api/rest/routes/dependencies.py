@@ -11,8 +11,8 @@ from typing import Annotated
 from fastapi import Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-from src.api.schemas.auth_schema import TokenPayload
-from src.api.core.exceptions.auth_exceptions import (
+from src.api.schemas.identity_schemas.auth_schema import TokenPayload
+from src.api.core.exceptions.identity_exceptions.auth_exceptions import (
     InsufficientPermissionsException,
 )
 from src.api.utils.tokens import decode_token

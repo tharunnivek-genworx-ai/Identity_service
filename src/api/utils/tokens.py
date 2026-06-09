@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 import jwt
 
 from src.api.config.dbconfig import settings
-from src.api.core.exceptions.auth_exceptions import InvalidTokenException
+from src.api.core.exceptions.identity_exceptions.auth_exceptions import InvalidTokenException
 
 
 def create_token(data: dict, expires_delta: timedelta) -> str:

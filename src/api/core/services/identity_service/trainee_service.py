@@ -14,18 +14,18 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.data.repositories.trainee_repository import TraineeRepository
-from src.api.data.repositories.department_repository import DepartmentRepository
-from src.api.schemas.trainees_schema import TraineeCreate, TraineeOut, TraineeDeactivateRequest, TraineeReactivateRequest
-from src.api.schemas.listing_endpoints import TraineeListResponse, PageParams
-from src.api.core.exceptions.trainee_exceptions import (
+from src.api.data.repositories.identity_repository.trainee_repository import TraineeRepository
+from src.api.data.repositories.identity_repository.department_repository import DepartmentRepository
+from src.api.schemas.identity_schemas.trainees_schema import TraineeCreate, TraineeOut, TraineeDeactivateRequest, TraineeReactivateRequest
+from src.api.schemas.identity_schemas.listing_endpoints import TraineeListResponse, PageParams
+from src.api.core.exceptions.identity_exceptions.trainee_exceptions import (
     TraineeNotFoundException,
     TraineeEmailAlreadyExistsException,
     TraineeEmployeeIdAlreadyExistsException,
     TraineeAlreadyDeactivatedException,
     TraineeAlreadyActiveException,
 )
-from src.api.core.exceptions.department_exceptions import DepartmentNotFoundException
+from src.api.core.exceptions.identity_exceptions.department_exceptions import DepartmentNotFoundException
 from src.api.utils.password import hash_password
 
 

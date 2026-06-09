@@ -10,12 +10,12 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.core.services.mentor_service import MentorService
+from src.api.core.services.identity_service.mentor_service import MentorService
 from src.api.data.clients.postgres.database import get_db
 from src.api.rest.routes.dependencies import require_role
-from src.api.schemas.auth_schema import TokenPayload
-from src.api.schemas.listing_endpoints import MentorListResponse, PageParams
-from src.api.schemas.mentors_schema import (
+from src.api.schemas.identity_schemas.auth_schema import TokenPayload
+from src.api.schemas.identity_schemas.listing_endpoints import MentorListResponse, PageParams
+from src.api.schemas.identity_schemas.mentors_schema import (
     MentorCreate,
     MentorDeactivateRequest,
     MentorOut,

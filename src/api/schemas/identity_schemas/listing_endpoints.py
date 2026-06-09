@@ -2,9 +2,9 @@ from typing import Generic, List, TypeVar
 
 from pydantic import BaseModel, Field
 
-from src.api.schemas.departments_schema import DepartmentOut
-from src.api.schemas.mentors_schema import MentorOut
-from src.api.schemas.trainees_schema import TraineeOut
+from src.api.schemas.identity_schemas.departments_schema import DepartmentOut
+from src.api.schemas.identity_schemas.mentors_schema import MentorOut
+from src.api.schemas.identity_schemas.trainees_schema import TraineeOut
 
 # Generic type variable for the paginated item type
 T = TypeVar("T")
