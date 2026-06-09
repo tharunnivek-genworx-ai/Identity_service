@@ -45,4 +45,8 @@ class Mentor(Base):
  
     department = relationship("Department", back_populates="mentors")
     created_by_admin = relationship("ITAdmin", back_populates="mentors_created")
- 
+
+    # ADD THESE:
+    owned_spaces = relationship("ESpace", foreign_keys="ESpace.mentorid", back_populates="mentor")
+    transferred_spaces = relationship("ESpace", foreign_keys="ESpace.transferredtomentorid", back_populates="transferred_to_mentor")
+    created_nodes = relationship("TopicNode", foreign_keys="TopicNode.createdby", back_populates="created_by_mentor")
