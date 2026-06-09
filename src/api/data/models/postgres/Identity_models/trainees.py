@@ -46,3 +46,4 @@ class Trainee(Base):
  
     department = relationship("Department", back_populates="trainees")
     created_by_admin = relationship("ITAdmin", back_populates="trainees_created")
+    space_trainees = relationship("SpaceTrainee", back_populates="trainee")
