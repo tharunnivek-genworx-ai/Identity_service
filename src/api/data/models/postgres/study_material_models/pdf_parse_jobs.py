@@ -1,7 +1,7 @@
 import uuid
 
-from sqlalchemy import Column, String, Text, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
+from sqlalchemy import Column, ForeignKey, String, Text
+from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
 from sqlalchemy.orm import relationship
 
 from src.api.data.clients.postgres.database import Base
@@ -26,9 +26,9 @@ class PdfParseJob(Base):
 
     # 'pending' -> 'parsing' -> 'llm_cleaning' -> 'preview_ready' -> 'applied' | 'failed'
     status = Column(String(30), nullable=False)
-    rawjson = Column(Text, nullable=True)           # raw output from LlamaParse
-    cleanedskeleton = Column(Text, nullable=True)   # LLM-restructured heading tree
-    errormessage = Column(Text, nullable=True)       # set on failure (EC-24)
+    rawjson = Column(Text, nullable=True)  # raw output from LlamaParse
+    cleanedskeleton = Column(Text, nullable=True)  # LLM-restructured heading tree
+    errormessage = Column(Text, nullable=True)  # set on failure (EC-24)
 
     initiatedby = Column(
         UUID(as_uuid=True),
@@ -36,7 +36,9 @@ class PdfParseJob(Base):
         nullable=False,
     )
     createdat = Column(TIMESTAMP(timezone=True), nullable=False, default=utc_now)
-    updatedat = Column(TIMESTAMP(timezone=True), nullable=False, default=utc_now, onupdate=utc_now)
+    updatedat = Column(
+        TIMESTAMP(timezone=True), nullable=False, default=utc_now, onupdate=utc_now
+    )
 
     space = relationship("ESpace", foreign_keys=[spaceid])
     material = relationship("ReferenceMaterial", foreign_keys=[materialid])

@@ -5,13 +5,13 @@ import uuid
 
 from sqlalchemy import select
 
-from src.api.data.models.postgres.Identity_models import mentors, trainees
 from src.api.data.clients.postgres.database import SessionLocal
-from src.api.data.models.postgres.Identity_models import departments  # noqa: F401
+from src.api.data.models.postgres.Identity_models import (
+    departments,  # noqa: F401
+)
 from src.api.data.models.postgres.Identity_models.it_admin import ITAdmin
 from src.api.utils.password import hash_password
 from src.api.utils.time import utc_now
-
 
 ADMIN_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
 ADMIN_EMAIL = "tharunnivekdev@gmail.com"

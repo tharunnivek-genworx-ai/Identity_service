@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, String, Boolean, Text, Integer, ForeignKey
+from sqlalchemy import Column, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -27,8 +27,8 @@ class NodeMedia(Base):
     # 'image', 'video_url', 'article_link'
     mediatype = Column(String(20), nullable=False)
     title = Column(String(300), nullable=True)
-    url = Column(Text, nullable=True)       # for video_url and article_link types
-    fileurl = Column(Text, nullable=True)   # GCS URL for image type
+    url = Column(Text, nullable=True)  # for video_url and article_link types
+    fileurl = Column(Text, nullable=True)  # GCS URL for image type
 
     orderindex = Column(Integer, nullable=False, default=0)
 

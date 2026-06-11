@@ -14,21 +14,25 @@ from datetime import timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.data.repositories.identity_repository.auth_repository import AuthRepository
-from src.api.schemas.identity_schemas.auth_schema import LoginRequest, LoginResponse, RefreshRequest
+from src.api.config.dbconfig import settings
 from src.api.core.exceptions.identity_exceptions.auth_exceptions import (
+    AccountDeactivatedException,
     InvalidCredentialsException,
     InvalidTokenException,
     TokenRevokedException,
-    AccountDeactivatedException,
 )
-from src.api.config.dbconfig import settings
+from src.api.data.repositories.identity_repository.auth_repository import AuthRepository
+from src.api.schemas.identity_schemas.auth_schema import (
+    LoginRequest,
+    LoginResponse,
+    LogoutRequest,
+    RefreshRequest,
+)
 from src.api.utils.password import verify_password
 from src.api.utils.tokens import create_token, decode_token
 
 
 class AuthService:
-
     def __init__(self, session: AsyncSession):
         self.session = session
 
@@ -115,7 +119,7 @@ class AuthService:
             "expires_in_minutes": settings.access_token_expire_minutes,
         }
 
-    async def logout(self, request) -> dict:
+    async def logout(self, request: LogoutRequest) -> dict[str, str]:
         """Blocklist the refresh token's jti so it can never be reused."""
         repo = AuthRepository(self.session)
 

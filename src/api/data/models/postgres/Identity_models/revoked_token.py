@@ -20,17 +20,16 @@ Cleanup note:
     Expired tokens are harmless in the blocklist but waste space long-term.
 """
 
-import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import Column, String
-from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
+from sqlalchemy.dialects.postgresql import TIMESTAMP
 
 from src.api.data.clients.postgres.database import Base
 
 
 def utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class RevokedToken(Base):
@@ -40,10 +39,10 @@ class RevokedToken(Base):
     # at token creation time in auth_service._create_token). Using it as PK
     # makes the existence check a single indexed lookup: SELECT WHERE jti = ?
     jti = Column(
-        String(36),         # UUID string: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+        String(36),  # UUID string: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
         primary_key=True,
         nullable=False,
-        index=True,         # explicit index even though PK — makes intent clear
+        index=True,  # explicit index even though PK — makes intent clear
     )
 
     # revokedat lets the cleanup job find and purge expired entries.

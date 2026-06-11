@@ -1,7 +1,7 @@
 import uuid
 
-from sqlalchemy import Column, String, Integer, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
+from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
 from sqlalchemy.orm import relationship
 
 from src.api.data.clients.postgres.database import Base
@@ -50,5 +50,7 @@ class ChatSession(Base):
     trainee = relationship("Trainee", foreign_keys=[traineeid])
     node = relationship("TopicNode", foreign_keys=[nodeid])
     space = relationship("ESpace", foreign_keys=[spaceid])
-    study_material_version = relationship("StudyMaterialVersion", foreign_keys=[studymaterialversionid])
+    study_material_version = relationship(
+        "StudyMaterialVersion", foreign_keys=[studymaterialversionid]
+    )
     messages = relationship("ChatMessage", back_populates="session")

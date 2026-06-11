@@ -1,7 +1,7 @@
 import uuid
 
-from sqlalchemy import Column, String, Boolean, Text, Integer, ForeignKey, Index
-from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
+from sqlalchemy import Boolean, Column, ForeignKey, Index, Integer, String, Text
+from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
 from sqlalchemy.orm import relationship
 
 from src.api.data.clients.postgres.database import Base
@@ -49,7 +49,9 @@ class TopicNode(Base):
     node_additive_instruction = Column("nodeadditiveinstruction", Text, nullable=True)
 
     # Future-use only — does NOT drive any MVP logic (every node at every depth is a learning unit)
-    is_primary_learning_unit = Column("isprimarylearningunit", Boolean, nullable=False, default=False)
+    is_primary_learning_unit = Column(
+        "isprimarylearningunit", Boolean, nullable=False, default=False
+    )
 
     is_active = Column("isactive", Boolean, nullable=False, default=True)
 

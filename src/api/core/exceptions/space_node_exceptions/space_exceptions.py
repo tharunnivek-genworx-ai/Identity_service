@@ -14,8 +14,8 @@ Naming convention (mirrors auth_exceptions.py):
 
 from fastapi import HTTPException, status
 
-
 # ── Space Not Found ─────────────────────────────────────────────────────────
+
 
 class SpaceNotFoundException(HTTPException):
     """Raised when a space_id does not exist or is not active."""
@@ -28,6 +28,7 @@ class SpaceNotFoundException(HTTPException):
 
 
 # ── Space Access / Ownership ────────────────────────────────────────────────
+
 
 class SpaceForbiddenException(HTTPException):
     """
@@ -57,6 +58,7 @@ class SpaceNotPublishedException(HTTPException):
 
 # ── Space State Conflicts ───────────────────────────────────────────────────
 
+
 class SpaceAlreadyPublishedException(HTTPException):
     """
     Raised when a mentor tries to publish a space that is already published.
@@ -85,6 +87,7 @@ class SpaceArchivedConflictException(HTTPException):
 
 # ── Invite Code ─────────────────────────────────────────────────────────────
 
+
 class InvalidInviteCodeException(HTTPException):
     """
     Raised when a trainee provides an invite code that does not match
@@ -112,6 +115,7 @@ class InviteCodeGenerationFailedException(HTTPException):
 
 
 # ── Membership ──────────────────────────────────────────────────────────────
+
 
 class TraineeAlreadyMemberException(HTTPException):
     """
@@ -167,6 +171,7 @@ class TraineeRemovedFromSpaceException(HTTPException):
 
 # ── Department ──────────────────────────────────────────────────────────────
 
+
 class DepartmentNotFoundException(HTTPException):
     """
     Raised when a space is being created with a department_id that does
@@ -181,6 +186,7 @@ class DepartmentNotFoundException(HTTPException):
 
 
 # ── Ownership Transfer ──────────────────────────────────────────────────────
+
 
 class TransferTargetNotFoundException(HTTPException):
     """

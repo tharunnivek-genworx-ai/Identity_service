@@ -1,7 +1,7 @@
 import uuid
 
-from sqlalchemy import Column, String, Text, ForeignKey, Index
-from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
+from sqlalchemy import Column, ForeignKey, Index, String, Text
+from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
 from sqlalchemy.orm import relationship
 
 from src.api.data.clients.postgres.database import Base
@@ -11,7 +11,9 @@ from src.api.utils.time import utc_now
 class NodeEventNotification(Base):
     __tablename__ = "nodeeventnotifications"
 
-    notification_id = Column("notificationid", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    notification_id = Column(
+        "notificationid", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
 
     space_id = Column(
         "spaceid",
@@ -58,18 +60,33 @@ class NodeEventNotification(Base):
         nullable=True,
     )
 
-    system_message = Column("systemmessage", Text, nullable=False)        # auto-generated description
-    mentor_custom_message = Column("mentorcustommessage", Text, nullable=True)   # optional mentor-written note
+    system_message = Column(
+        "systemmessage", Text, nullable=False
+    )  # auto-generated description
+    mentor_custom_message = Column(
+        "mentorcustommessage", Text, nullable=True
+    )  # optional mentor-written note
 
-    created_at = Column("createdat", TIMESTAMP(timezone=True), nullable=False, default=utc_now)
+    created_at = Column(
+        "createdat", TIMESTAMP(timezone=True), nullable=False, default=utc_now
+    )
 
     __table_args__ = (
-        Index("ix_nodeeventnotifications_space_node_created", "spaceid", "nodeid", "createdat"),
+        Index(
+            "ix_nodeeventnotifications_space_node_created",
+            "spaceid",
+            "nodeid",
+            "createdat",
+        ),
     )
 
     space = relationship("ESpace", foreign_keys=[space_id])
     node = relationship("TopicNode", foreign_keys=[node_id])
     triggered_by_mentor = relationship("Mentor", foreign_keys=[triggered_by])
-    related_version = relationship("StudyMaterialVersion", foreign_keys=[related_version_id])
+    related_version = relationship(
+        "StudyMaterialVersion", foreign_keys=[related_version_id]
+    )
     related_quiz = relationship("Quiz", foreign_keys=[related_quiz_id])
-    related_material = relationship("ReferenceMaterial", foreign_keys=[related_material_id])
+    related_material = relationship(
+        "ReferenceMaterial", foreign_keys=[related_material_id]
+    )

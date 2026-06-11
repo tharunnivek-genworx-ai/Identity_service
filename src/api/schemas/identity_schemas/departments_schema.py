@@ -1,7 +1,6 @@
-from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from .common_schema import Timestamped
 
@@ -11,7 +10,7 @@ class DepartmentBase(BaseModel):
 
     department_name: str = Field(..., max_length=150, alias="departmentname")
     department_code: str = Field(..., max_length=30, alias="departmentcode")
-    description: Optional[str] = None
+    description: str | None = None
     is_active: bool = Field(True, alias="isactive")
 
 
@@ -26,11 +25,12 @@ class DepartmentUpdate(BaseModel):
     departmentcode is intentionally NOT updatable (it is a business key
     used by other services for reference; changing it would break FK semantics).
     """
+
     model_config = ConfigDict(populate_by_name=True)
 
-    department_name: Optional[str] = Field(None, max_length=150, alias="departmentname")
-    description: Optional[str] = None
-    is_active: Optional[bool] = Field(None, alias="isactive")
+    department_name: str | None = Field(None, max_length=150, alias="departmentname")
+    description: str | None = None
+    is_active: bool | None = Field(None, alias="isactive")
 
 
 class DepartmentOut(DepartmentBase, Timestamped):
@@ -39,6 +39,7 @@ class DepartmentOut(DepartmentBase, Timestamped):
     model_config declared explicitly for clarity (from_attributes allows
     SQLAlchemy ORM objects to be passed directly to this schema).
     """
+
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     department_id: UUID = Field(..., alias="departmentid")

@@ -7,4 +7,6 @@ _INVITE_CODE_MAX_ATTEMPTS = 10
 
 
 def _generate_invite_code() -> str:
-    return "".join(secrets.choice(_INVITE_CODE_ALPHABET) for _ in range(_INVITE_CODE_LENGTH))
+    return "".join(
+        secrets.choice(_INVITE_CODE_ALPHABET) for _ in range(_INVITE_CODE_LENGTH)
+    )

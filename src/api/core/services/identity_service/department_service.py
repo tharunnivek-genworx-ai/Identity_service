@@ -9,23 +9,32 @@ Endpoints served (Section 3.5.2):
 """
 
 import math
+from typing import cast
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.data.repositories.identity_repository.department_repository import DepartmentRepository
-from src.api.schemas.identity_schemas.departments_schema import DepartmentCreate, DepartmentUpdate, DepartmentOut
-from src.api.schemas.identity_schemas.listing_endpoints import DepartmentListResponse, PageParams
 from src.api.core.exceptions.identity_exceptions.department_exceptions import (
-    DepartmentNotFoundException,
     DepartmentCodeAlreadyExistsException,
-    DepartmentNameAlreadyExistsException,
     DepartmentHasActiveMembersException,
+    DepartmentNameAlreadyExistsException,
+    DepartmentNotFoundException,
+)
+from src.api.data.repositories.identity_repository.department_repository import (
+    DepartmentRepository,
+)
+from src.api.schemas.identity_schemas.departments_schema import (
+    DepartmentCreate,
+    DepartmentOut,
+    DepartmentUpdate,
+)
+from src.api.schemas.identity_schemas.listing_endpoints import (
+    DepartmentListResponse,
+    PageParams,
 )
 
 
 class DepartmentService:
-
     def __init__(self, session: AsyncSession):
         self.session = session
 
@@ -51,7 +60,7 @@ class DepartmentService:
             is_active=payload.is_active,
             created_by=created_by,
         )
-        return DepartmentOut.model_validate(dept)
+        return cast(DepartmentOut, DepartmentOut.model_validate(dept))
 
     async def list_departments(self, params: PageParams) -> DepartmentListResponse:
         repo = DepartmentRepository(self.session)
@@ -72,7 +81,7 @@ class DepartmentService:
         dept = await repo.get_by_id(department_id)
         if not dept:
             raise DepartmentNotFoundException(str(department_id))
-        return DepartmentOut.model_validate(dept)
+        return cast(DepartmentOut, DepartmentOut.model_validate(dept))
 
     async def update_department(
         self,
@@ -98,4 +107,4 @@ class DepartmentService:
                 raise DepartmentHasActiveMembersException()
 
         dept = await repo.update(dept, updates)
-        return DepartmentOut.model_validate(dept)
+        return cast(DepartmentOut, DepartmentOut.model_validate(dept))

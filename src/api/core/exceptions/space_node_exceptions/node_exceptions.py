@@ -12,8 +12,8 @@ All exceptions extend HTTPException for direct FastAPI raise compatibility.
 
 from fastapi import HTTPException, status
 
-
 # ── Node Not Found ──────────────────────────────────────────────────────────
+
 
 class NodeNotFoundException(HTTPException):
     """Raised when a node_id does not exist or does not belong to the given space."""
@@ -26,6 +26,7 @@ class NodeNotFoundException(HTTPException):
 
 
 # ── Node Access ─────────────────────────────────────────────────────────────
+
 
 class NodeForbiddenException(HTTPException):
     """
@@ -41,6 +42,7 @@ class NodeForbiddenException(HTTPException):
 
 
 # ── Node State ──────────────────────────────────────────────────────────────
+
 
 class NodeAlreadyArchivedException(HTTPException):
     """
@@ -70,6 +72,7 @@ class NodeArchivedModificationException(HTTPException):
 
 
 # ── Tree Structure Violations ───────────────────────────────────────────────
+
 
 class NodeParentSpaceMismatchException(HTTPException):
     """
@@ -113,6 +116,7 @@ class NodeParentArchivedException(HTTPException):
 
 
 # ── Reorder Violations ──────────────────────────────────────────────────────
+
 
 class NodeReorderSiblingMismatchException(HTTPException):
     """

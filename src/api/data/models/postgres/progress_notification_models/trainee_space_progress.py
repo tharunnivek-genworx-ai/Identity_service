@@ -1,7 +1,7 @@
 import uuid
 
-from sqlalchemy import Column, Float, Integer, ForeignKey, UniqueConstraint
-from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
+from sqlalchemy import Column, Float, ForeignKey, Integer, UniqueConstraint
+from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
 from sqlalchemy.orm import relationship
 
 from src.api.data.clients.postgres.database import Base
@@ -11,7 +11,9 @@ from src.api.utils.time import utc_now
 class TraineeSpaceProgress(Base):
     __tablename__ = "traineespaceprogress"
 
-    space_progress_id = Column("spaceprogressid", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    space_progress_id = Column(
+        "spaceprogressid", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
 
     trainee_id = Column(
         "traineeid",
@@ -35,10 +37,18 @@ class TraineeSpaceProgress(Base):
     overall_score_avg = Column("overallscoreavg", Float, nullable=True)
 
     last_activity_at = Column("lastactivityat", TIMESTAMP(timezone=True), nullable=True)
-    updated_at = Column("updatedat", TIMESTAMP(timezone=True), nullable=False, default=utc_now, onupdate=utc_now)
+    updated_at = Column(
+        "updatedat",
+        TIMESTAMP(timezone=True),
+        nullable=False,
+        default=utc_now,
+        onupdate=utc_now,
+    )
 
     __table_args__ = (
-        UniqueConstraint("traineeid", "spaceid", name="uq_traineespaceprogress_trainee_space"),
+        UniqueConstraint(
+            "traineeid", "spaceid", name="uq_traineespaceprogress_trainee_space"
+        ),
     )
 
     trainee = relationship("Trainee", foreign_keys=[trainee_id])

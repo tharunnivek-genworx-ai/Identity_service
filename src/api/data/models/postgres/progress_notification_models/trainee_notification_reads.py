@@ -1,7 +1,7 @@
 import uuid
 
-from sqlalchemy import Column, String, ForeignKey, UniqueConstraint, Index
-from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
+from sqlalchemy import Column, ForeignKey, Index, String, UniqueConstraint
+from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
 from sqlalchemy.orm import relationship
 
 from src.api.data.clients.postgres.database import Base
@@ -28,14 +28,20 @@ class TraineeNotificationRead(Base):
     # No FK constraint — enforced at app layer only (two possible target tables).
     notification_id = Column("notificationid", UUID(as_uuid=True), nullable=False)
 
-    read_at = Column("readat", TIMESTAMP(timezone=True), nullable=False, default=utc_now)
+    read_at = Column(
+        "readat", TIMESTAMP(timezone=True), nullable=False, default=utc_now
+    )
 
     __table_args__ = (
         UniqueConstraint(
-            "traineeid", "notificationtype", "notificationid",
-            name="uq_traineenotificationreads_trainee_type_notification"
+            "traineeid",
+            "notificationtype",
+            "notificationid",
+            name="uq_traineenotificationreads_trainee_type_notification",
         ),
-        Index("ix_traineenotificationreads_trainee_type", "traineeid", "notificationtype"),
+        Index(
+            "ix_traineenotificationreads_trainee_type", "traineeid", "notificationtype"
+        ),
     )
 
     trainee = relationship("Trainee", foreign_keys=[trainee_id])

@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, String, Integer, ForeignKey
+from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -18,8 +18,8 @@ class PdfParseJobNode(Base):
         nullable=False,
     )
 
-    title = Column(String(300), nullable=False)     # heading extracted from PDF
-    level = Column(Integer, nullable=False)          # depth level in heading hierarchy
+    title = Column(String(300), nullable=False)  # heading extracted from PDF
+    level = Column(Integer, nullable=False)  # depth level in heading hierarchy
     orderindex = Column(Integer, nullable=False)
 
     # 'pending', 'approved', 'renamed', 'skipped' — set by mentor during skeleton review (EC-25)

@@ -8,9 +8,10 @@ Handles:
   - Invite code lookup
 """
 
+from typing import cast
 from uuid import UUID, uuid4
 
-from sqlalchemy import select, and_, func
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.data.models.postgres.e_spaces_trees.espaces import ESpace
@@ -18,11 +19,14 @@ from src.api.data.models.postgres.e_spaces_trees.space_trainees import SpaceTrai
 from src.api.data.models.postgres.Identity_models.departments import Department
 from src.api.data.models.postgres.Identity_models.mentors import Mentor
 from src.api.data.models.postgres.Identity_models.trainees import Trainee
-from src.api.schemas.space_node_schemas.space_schema import SpaceCreateRequest, SpaceUpdateRequest
+from src.api.schemas.space_node_schemas.space_schema import (
+    SpaceCreateRequest,
+    SpaceUpdateRequest,
+)
 from src.api.utils.time import utc_now as get_current_utc_time
 
-class SpaceRepository:
 
+class SpaceRepository:
     def __init__(self, session: AsyncSession):
         self.db = session
 
@@ -32,7 +36,7 @@ class SpaceRepository:
         result = await self.db.execute(
             select(Department).where(Department.department_id == department_id)
         )
-        return result.scalars().first()
+        return cast(Department | None, result.scalars().first())
 
     # ── Mentor lookup (for ownership transfer) ──────────────────────────
 
@@ -40,7 +44,7 @@ class SpaceRepository:
         result = await self.db.execute(
             select(Mentor).where(Mentor.mentor_id == mentor_id)
         )
-        return result.scalars().first()
+        return cast(Mentor | None, result.scalars().first())
 
     # ── Space lookups ───────────────────────────────────────────────────
 
@@ -48,23 +52,23 @@ class SpaceRepository:
         result = await self.db.execute(
             select(ESpace).where(ESpace.space_id == space_id)
         )
-        return result.scalars().first()
+        return cast(ESpace | None, result.scalars().first())
 
     async def get_space_by_invite_code(self, invite_code: str) -> ESpace | None:
         result = await self.db.execute(
             select(ESpace).where(ESpace.invite_code == invite_code)
         )
-        return result.scalars().first()
+        return cast(ESpace | None, result.scalars().first())
 
     async def list_spaces_by_mentor(
         self, mentor_id: UUID, skip: int = 0, limit: int = 20
     ) -> tuple[list[ESpace], int]:
-        """Return paginated active spaces where mentor is original owner or transfer target."""
+        """Paginated active spaces where mentor is owner or transfer target."""
         filters = and_(
-            ESpace.is_active == True,
+            ESpace.is_active,
             # Effective owner: either original or transferred
-            (ESpace.mentor_id == mentor_id) |
-            (ESpace.transferred_to_mentor_id == mentor_id),
+            (ESpace.mentor_id == mentor_id)
+            | (ESpace.transferred_to_mentor_id == mentor_id),
         )
 
         count_result = await self.db.execute(
@@ -84,15 +88,15 @@ class SpaceRepository:
     async def list_spaces_by_trainee(
         self, trainee_id: UUID, skip: int = 0, limit: int = 20
     ) -> tuple[list[ESpace], int]:
-        """Return paginated active published spaces the trainee is an active member of."""
+        """Paginated published spaces the trainee is an active member of."""
         join_filters = and_(
             SpaceTrainee.space_id == ESpace.space_id,
             SpaceTrainee.trainee_id == trainee_id,
-            SpaceTrainee.is_active == True,
+            SpaceTrainee.is_active,
         )
         filters = and_(
-            ESpace.is_active == True,
-            ESpace.is_published == True,
+            ESpace.is_active,
+            ESpace.is_published,
         )
 
         count_result = await self.db.execute(
@@ -179,7 +183,7 @@ class SpaceRepository:
             .where(
                 and_(
                     SpaceTrainee.space_id == space_id,
-                    SpaceTrainee.is_active == True,
+                    SpaceTrainee.is_active,
                 )
             )
             .order_by(Trainee.full_name)
@@ -192,7 +196,7 @@ class SpaceRepository:
                 and_(
                     SpaceTrainee.space_id == space_id,
                     SpaceTrainee.trainee_id == trainee_id,
-                    SpaceTrainee.is_active == True,
+                    SpaceTrainee.is_active,
                 )
             )
         )
@@ -206,11 +210,11 @@ class SpaceRepository:
                 and_(
                     SpaceTrainee.space_id == space_id,
                     SpaceTrainee.trainee_id == trainee_id,
-                    SpaceTrainee.is_active == True,
+                    SpaceTrainee.is_active,
                 )
             )
         )
-        return result.scalars().first()
+        return cast(SpaceTrainee | None, result.scalars().first())
 
     async def get_membership(
         self, space_id: UUID, trainee_id: UUID
@@ -224,7 +228,7 @@ class SpaceRepository:
                 )
             )
         )
-        return result.scalars().first()
+        return cast(SpaceTrainee | None, result.scalars().first())
 
     async def add_trainees_to_space(
         self,
@@ -232,7 +236,7 @@ class SpaceRepository:
         trainee_ids: list[UUID],
         joined_via: str,
     ) -> tuple[int, int]:
-        """Insert or reactivate membership rows. Returns (added_count, skipped_count)."""
+        """Insert or reactivate membership rows. Returns added/skipped counts."""
         added = 0
         skipped = 0
         now = get_current_utc_time()

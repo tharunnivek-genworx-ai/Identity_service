@@ -6,13 +6,13 @@ which just needs a valid refresh token in the body)."""
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.data.clients.postgres.database import get_db
 from src.api.core.services.identity_service.auth_service import AuthService
+from src.api.data.clients.postgres.database import get_db
 from src.api.schemas.identity_schemas.auth_schema import (
     LoginRequest,
     LoginResponse,
-    RefreshRequest,
     LogoutRequest,
+    RefreshRequest,
 )
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -22,7 +22,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 async def login(
     payload: LoginRequest,
     db: AsyncSession = Depends(get_db),
-):
+) -> LoginResponse:
     """Authenticate any role (itadmin / mentor / trainee) by email + password.
     Returns both an access token (60 min) and a refresh token (7 days)."""
     service = AuthService(db)
@@ -33,7 +33,7 @@ async def login(
 async def refresh_token(
     payload: RefreshRequest,
     db: AsyncSession = Depends(get_db),
-):
+) -> dict[str, object]:
     """Exchange a valid refresh token for a new access token.
     The refresh token's jti must not appear in the revocation blocklist."""
     service = AuthService(db)
@@ -44,7 +44,7 @@ async def refresh_token(
 async def logout(
     payload: LogoutRequest,
     db: AsyncSession = Depends(get_db),
-):
+) -> dict[str, str]:
     """Invalidate the refresh token by adding its jti to the blocklist.
     After this, the refresh token can never be used again."""
     service = AuthService(db)
