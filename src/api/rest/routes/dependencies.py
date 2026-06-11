@@ -6,15 +6,16 @@ get_current_user → decodes the Bearer JWT and returns the token payload
 require_role   → factory that returns a dependency enforcing a specific role
 """
 
+from collections.abc import Awaitable, Callable
 from typing import Annotated
 
 from fastapi import Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from src.api.schemas.identity_schemas.auth_schema import TokenPayload
 from src.api.core.exceptions.identity_exceptions.auth_exceptions import (
     InsufficientPermissionsException,
 )
+from src.api.schemas.identity_schemas.auth_schema import TokenPayload
 from src.api.utils.tokens import decode_token
 
 bearer_scheme = HTTPBearer()
@@ -34,15 +35,19 @@ async def get_current_user(
     return TokenPayload(**payload)
 
 
-def require_role(*roles: str):
+def require_role(
+    *roles: str,
+) -> Callable[..., Awaitable[TokenPayload]]:
     """Dependency factory. Usage:
-        Depends(require_role("itadmin"))
-        Depends(require_role("mentor", "itadmin"))
+    Depends(require_role("itadmin"))
+    Depends(require_role("mentor", "itadmin"))
     """
+
     async def _guard(
         current_user: Annotated[TokenPayload, Depends(get_current_user)],
     ) -> TokenPayload:
         if current_user.role not in roles:
             raise InsufficientPermissionsException(required_role=", ".join(roles))
         return current_user
+
     return _guard

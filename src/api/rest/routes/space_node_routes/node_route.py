@@ -14,19 +14,19 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.data.clients.postgres.database import get_db
 from src.api.core.services.space_node_service.node_service import NodeService
+from src.api.data.clients.postgres.database import get_db
 from src.api.rest.routes.dependencies import get_current_user
 from src.api.schemas.identity_schemas.auth_schema import TokenPayload
 from src.api.schemas.space_node_schemas.node_schema import (
+    NodeArchiveRequest,
     NodeCreateRequest,
     NodeRenameRequest,
-    NodeUpdateInstructionRequest,
-    NodeReparentRequest,
     NodeReorderRequest,
-    NodeArchiveRequest,
+    NodeReparentRequest,
     NodeResponse,
     NodeTreeResponse,
+    NodeUpdateInstructionRequest,
 )
 
 router = APIRouter(tags=["Topic Tree"])
@@ -42,12 +42,14 @@ async def create_node(
     payload: NodeCreateRequest,
     db: AsyncSession = Depends(get_db),
     current_user: TokenPayload = Depends(get_current_user),
-):
+) -> NodeResponse:
     """Mentor creates a node in the topic tree of a space.
     parent_id = None creates a root-level topic (level 1).
     level is auto-computed; order_index defaults to appending at end of siblings."""
     service = NodeService(db)
-    return await service.create_node(space_id, payload, current_user.sub, current_user.role)
+    return await service.create_node(
+        space_id, payload, current_user.sub, current_user.role
+    )
 
 
 @router.get("/spaces/{space_id}/tree", response_model=NodeTreeResponse)
@@ -55,7 +57,7 @@ async def get_tree(
     space_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: TokenPayload = Depends(get_current_user),
-):
+) -> NodeTreeResponse:
     """Return the full recursive topic tree for a space.
     Mentor must be effective owner. Trainee must be an active member.
     Only is_active = True nodes are included."""
@@ -68,7 +70,7 @@ async def get_node(
     node_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: TokenPayload = Depends(get_current_user),
-):
+) -> NodeResponse:
     """Fetch a single node by ID. Caller must have access to the parent space."""
     service = NodeService(db)
     return await service.get_node(node_id, current_user.sub, current_user.role)
@@ -80,11 +82,13 @@ async def rename_node(
     payload: NodeRenameRequest,
     db: AsyncSession = Depends(get_db),
     current_user: TokenPayload = Depends(get_current_user),
-):
+) -> NodeResponse:
     """Mentor renames a node's title. node_id is stable — all downstream
     FKs (attempts, progress, study material) remain valid after rename (EC-1)."""
     service = NodeService(db)
-    return await service.rename_node(node_id, payload, current_user.sub, current_user.role)
+    return await service.rename_node(
+        node_id, payload, current_user.sub, current_user.role
+    )
 
 
 @router.patch("/nodes/{node_id}/instruction", response_model=NodeResponse)
@@ -93,7 +97,7 @@ async def update_node_instruction(
     payload: NodeUpdateInstructionRequest,
     db: AsyncSession = Depends(get_db),
     current_user: TokenPayload = Depends(get_current_user),
-):
+) -> NodeResponse:
     """Mentor updates any combination of the three node instruction fields.
 
     Instruction modes:
@@ -109,8 +113,9 @@ async def update_node_instruction(
       - Sending a string                     → field is WRITTEN
     """
     service = NodeService(db)
-    return await service.update_node_instruction(node_id, payload, current_user.sub, current_user.role)
-
+    return await service.update_node_instruction(
+        node_id, payload, current_user.sub, current_user.role
+    )
 
 
 @router.patch("/nodes/{node_id}/reparent", response_model=NodeResponse)
@@ -119,12 +124,14 @@ async def reparent_node(
     payload: NodeReparentRequest,
     db: AsyncSession = Depends(get_db),
     current_user: TokenPayload = Depends(get_current_user),
-):
+) -> NodeResponse:
     """Mentor moves a node to a new parent (or promotes it to root if
     new_parent_id = None). Service validates against circular references
     and cross-space moves. level is recomputed on commit (EC-2)."""
     service = NodeService(db)
-    return await service.reparent_node(node_id, payload, current_user.sub, current_user.role)
+    return await service.reparent_node(
+        node_id, payload, current_user.sub, current_user.role
+    )
 
 
 @router.patch("/spaces/{space_id}/nodes/reorder", status_code=status.HTTP_200_OK)
@@ -133,11 +140,13 @@ async def reorder_nodes(
     payload: NodeReorderRequest,
     db: AsyncSession = Depends(get_db),
     current_user: TokenPayload = Depends(get_current_user),
-):
+) -> dict[str, object]:
     """Bulk-update order_index for a set of sibling nodes under the same parent.
     All nodes in the payload must be siblings. Partial sibling sets are rejected."""
     service = NodeService(db)
-    return await service.reorder_nodes(space_id, payload, current_user.sub, current_user.role)
+    return await service.reorder_nodes(
+        space_id, payload, current_user.sub, current_user.role
+    )
 
 
 @router.patch("/nodes/{node_id}/archive", status_code=status.HTTP_200_OK)
@@ -146,9 +155,11 @@ async def archive_node(
     payload: NodeArchiveRequest,
     db: AsyncSession = Depends(get_db),
     current_user: TokenPayload = Depends(get_current_user),
-):
+) -> dict[str, object]:
     """Mentor soft-archives a node (is_active = false). If archive_children = True,
     all descendants are archived recursively. Historical attempts remain readable
     and archived nodes no longer count toward space progress (EC-3)."""
     service = NodeService(db)
-    return await service.archive_node(node_id, payload, current_user.sub, current_user.role)
+    return await service.archive_node(
+        node_id, payload, current_user.sub, current_user.role
+    )

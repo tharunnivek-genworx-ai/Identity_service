@@ -10,28 +10,42 @@ Endpoints served (Section 3.5.2):
 """
 
 import math
+from typing import cast
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.data.repositories.identity_repository.mentor_repository import MentorRepository
-from src.api.data.repositories.identity_repository.department_repository import DepartmentRepository
-from src.api.schemas.identity_schemas.mentors_schema import MentorCreate, MentorOut, MentorDeactivateRequest, MentorReactivateRequest
-from src.api.schemas.identity_schemas.listing_endpoints import MentorListResponse, PageParams
+from src.api.core.exceptions.identity_exceptions.department_exceptions import (
+    DepartmentNotFoundException,
+)
 from src.api.core.exceptions.identity_exceptions.mentor_exceptions import (
-    MentorNotFoundException,
+    MentorAlreadyActiveException,
+    MentorAlreadyDeactivatedException,
     MentorEmailAlreadyExistsException,
     MentorEmployeeIdAlreadyExistsException,
-    MentorAlreadyDeactivatedException,
-    MentorAlreadyActiveException,
+    MentorNotFoundException,
     TransferTargetNotFoundException,
 )
-from src.api.core.exceptions.identity_exceptions.department_exceptions import DepartmentNotFoundException
+from src.api.data.repositories.identity_repository.department_repository import (
+    DepartmentRepository,
+)
+from src.api.data.repositories.identity_repository.mentor_repository import (
+    MentorRepository,
+)
+from src.api.schemas.identity_schemas.listing_endpoints import (
+    MentorListResponse,
+    PageParams,
+)
+from src.api.schemas.identity_schemas.mentors_schema import (
+    MentorCreate,
+    MentorDeactivateRequest,
+    MentorOut,
+    MentorReactivateRequest,
+)
 from src.api.utils.password import hash_password
 
 
 class MentorService:
-
     def __init__(self, session: AsyncSession):
         self.session = session
 
@@ -70,7 +84,7 @@ class MentorService:
             profile_picture_url=payload.profile_picture_url,
             is_active=payload.is_active,
         )
-        return MentorOut.model_validate(mentor)
+        return cast(MentorOut, MentorOut.model_validate(mentor))
 
     async def list_mentors(self, params: PageParams) -> MentorListResponse:
         repo = MentorRepository(self.session)
@@ -91,7 +105,7 @@ class MentorService:
         mentor = await repo.get_by_id(mentor_id)
         if not mentor:
             raise MentorNotFoundException(str(mentor_id))
-        return MentorOut.model_validate(mentor)
+        return cast(MentorOut, MentorOut.model_validate(mentor))
 
     async def deactivate_mentor(
         self,
@@ -100,9 +114,9 @@ class MentorService:
     ) -> MentorOut:
         """Soft-delete a mentor. Optionally records a space transfer target (EC-27).
 
-        Note: the actual space ownership transfer (setting e_spaces.transferred_to_mentor_id)
-        is performed by the Space & Topic Service. This service only validates that the
-        transfer target exists and is active, then stores the target ID on the mentor row
+        Note: space ownership transfer (e_spaces.transferred_to_mentor_id) is handled
+        by the Space & Topic Service. This service validates the transfer target and
+        stores the target ID on the mentor row
         so the Space service can query it.
         """
         repo = MentorRepository(self.session)
@@ -118,10 +132,12 @@ class MentorService:
         if payload.transferred_to_mentor_id:
             target = await repo.get_by_id(payload.transferred_to_mentor_id)
             if not target or not target.is_active:
-                raise TransferTargetNotFoundException(str(payload.transferred_to_mentor_id))
+                raise TransferTargetNotFoundException(
+                    str(payload.transferred_to_mentor_id)
+                )
 
         mentor = await repo.deactivate(mentor)
-        return MentorOut.model_validate(mentor)
+        return cast(MentorOut, MentorOut.model_validate(mentor))
 
     async def reactivate_mentor(
         self,
@@ -139,4 +155,4 @@ class MentorService:
             raise MentorAlreadyActiveException()
 
         mentor = await repo.reactivate(mentor)
-        return MentorOut.model_validate(mentor)
+        return cast(MentorOut, MentorOut.model_validate(mentor))

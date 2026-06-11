@@ -1,7 +1,7 @@
 import uuid
 
-from sqlalchemy import Column, String, Boolean, Text, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
+from sqlalchemy import Boolean, Column, ForeignKey, String, Text
+from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
 from sqlalchemy.orm import relationship
 
 from src.api.data.clients.postgres.database import Base
@@ -11,7 +11,9 @@ from src.api.utils.time import utc_now
 class ESpace(Base):
     __tablename__ = "espaces"
 
-    space_id = Column("spaceid", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    space_id = Column(
+        "spaceid", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
     space_name = Column("spacename", String(200), nullable=False)
     description = Column(Text, nullable=True)
 
@@ -40,12 +42,26 @@ class ESpace(Base):
     is_published = Column("ispublished", Boolean, nullable=False, default=False)
     is_active = Column("isactive", Boolean, nullable=False, default=True)
 
-    created_at = Column("createdat", TIMESTAMP(timezone=True), nullable=False, default=utc_now)
-    updated_at = Column("updatedat", TIMESTAMP(timezone=True), nullable=False, default=utc_now, onupdate=utc_now)
+    created_at = Column(
+        "createdat", TIMESTAMP(timezone=True), nullable=False, default=utc_now
+    )
+    updated_at = Column(
+        "updatedat",
+        TIMESTAMP(timezone=True),
+        nullable=False,
+        default=utc_now,
+        onupdate=utc_now,
+    )
     archived_at = Column("archivedat", TIMESTAMP(timezone=True), nullable=True)
 
     department = relationship("Department", back_populates="spaces")
-    mentor = relationship("Mentor", foreign_keys=[mentor_id], back_populates="owned_spaces")
-    transferred_to_mentor = relationship("Mentor", foreign_keys=[transferred_to_mentor_id], back_populates="transferred_spaces")
+    mentor = relationship(
+        "Mentor", foreign_keys=[mentor_id], back_populates="owned_spaces"
+    )
+    transferred_to_mentor = relationship(
+        "Mentor",
+        foreign_keys=[transferred_to_mentor_id],
+        back_populates="transferred_spaces",
+    )
     space_trainees = relationship("SpaceTrainee", back_populates="space")
     topic_nodes = relationship("TopicNode", back_populates="space")

@@ -1,7 +1,7 @@
 import uuid
 
-from sqlalchemy import Column, String, Boolean, Integer, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
 from sqlalchemy.orm import relationship
 
 from src.api.data.clients.postgres.database import Base
@@ -49,12 +49,22 @@ class Quiz(Base):
         ForeignKey("mentors.mentorid", ondelete="RESTRICT"),
         nullable=False,
     )
-    created_at = Column("createdat", TIMESTAMP(timezone=True), nullable=False, default=utc_now)
-    updated_at = Column("updatedat", TIMESTAMP(timezone=True), nullable=False, default=utc_now, onupdate=utc_now)
+    created_at = Column(
+        "createdat", TIMESTAMP(timezone=True), nullable=False, default=utc_now
+    )
+    updated_at = Column(
+        "updatedat",
+        TIMESTAMP(timezone=True),
+        nullable=False,
+        default=utc_now,
+        onupdate=utc_now,
+    )
 
     node = relationship("TopicNode", foreign_keys=[node_id])
     space = relationship("ESpace", foreign_keys=[space_id])
-    study_material_version = relationship("StudyMaterialVersion", back_populates="quizzes")
+    study_material_version = relationship(
+        "StudyMaterialVersion", back_populates="quizzes"
+    )
     created_by_mentor = relationship("Mentor", foreign_keys=[created_by])
     questions = relationship("QuizQuestion", back_populates="quiz")
     attempts = relationship("QuizAttempt", back_populates="quiz")

@@ -14,7 +14,10 @@ from src.api.core.services.identity_service.mentor_service import MentorService
 from src.api.data.clients.postgres.database import get_db
 from src.api.rest.routes.dependencies import require_role
 from src.api.schemas.identity_schemas.auth_schema import TokenPayload
-from src.api.schemas.identity_schemas.listing_endpoints import MentorListResponse, PageParams
+from src.api.schemas.identity_schemas.listing_endpoints import (
+    MentorListResponse,
+    PageParams,
+)
 from src.api.schemas.identity_schemas.mentors_schema import (
     MentorCreate,
     MentorDeactivateRequest,
@@ -32,7 +35,7 @@ async def create_mentor(
     payload: MentorCreate,
     current_user: ITAdminUser,
     db: AsyncSession = Depends(get_db),
-):
+) -> MentorOut:
     """Create a new mentor account. Password is hashed in the service layer.
     The mentor's department must already exist."""
     service = MentorService(db)
@@ -44,7 +47,7 @@ async def list_mentors(
     current_user: ITAdminUser,
     params: PageParams = Depends(),
     db: AsyncSession = Depends(get_db),
-):
+) -> MentorListResponse:
     """List all mentor accounts with pagination."""
     service = MentorService(db)
     return await service.list_mentors(params)
@@ -55,7 +58,7 @@ async def get_mentor(
     mentor_id: UUID,
     current_user: ITAdminUser,
     db: AsyncSession = Depends(get_db),
-):
+) -> MentorOut:
     """Fetch a single mentor by ID."""
     service = MentorService(db)
     return await service.get_mentor(mentor_id)
@@ -67,7 +70,7 @@ async def deactivate_mentor(
     payload: MentorDeactivateRequest,
     current_user: ITAdminUser,
     db: AsyncSession = Depends(get_db),
-):
+) -> MentorOut:
     """Soft-delete a mentor account (sets isactive=False, stamps deletedat).
     If transferred_to_mentor_id is provided, it is validated to be an active
     mentor - the Space service will use it for ownership transfer (EC-27)."""
@@ -81,7 +84,7 @@ async def reactivate_mentor(
     payload: MentorReactivateRequest,
     current_user: ITAdminUser,
     db: AsyncSession = Depends(get_db),
-):
+) -> MentorOut:
     """Re-enable a soft-deleted mentor. Clears deletedat, sets isactive=True.
     All historical data (spaces, content, progress) is fully restored (EC-29)."""
     service = MentorService(db)

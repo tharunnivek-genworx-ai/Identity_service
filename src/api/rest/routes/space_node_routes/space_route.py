@@ -15,23 +15,23 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.data.clients.postgres.database import get_db
 from src.api.core.services.space_node_service.space_service import SpaceService
+from src.api.data.clients.postgres.database import get_db
 from src.api.rest.routes.dependencies import get_current_user
 from src.api.schemas.identity_schemas.auth_schema import TokenPayload
 from src.api.schemas.space_node_schemas.space_schema import (
-    SpaceCreateRequest,
-    SpaceUpdateRequest,
-    SpacePublishRequest,
-    SpaceTransferOwnershipRequest,
-    SpaceAddTraineesRequest,
-    SpaceRemoveTraineeRequest,
-    SpaceJoinRequest,
-    SpaceResponse,
-    SpaceListResponse,
-    SpaceJoinResponse,
-    SpaceMemberSummary,
     PageParams,
+    SpaceAddTraineesRequest,
+    SpaceCreateRequest,
+    SpaceJoinRequest,
+    SpaceJoinResponse,
+    SpaceListResponse,
+    SpaceMemberSummary,
+    SpacePublishRequest,
+    SpaceRemoveTraineeRequest,
+    SpaceResponse,
+    SpaceTransferOwnershipRequest,
+    SpaceUpdateRequest,
 )
 
 router = APIRouter(prefix="/spaces", tags=["Spaces"])
@@ -42,7 +42,7 @@ async def create_space(
     payload: SpaceCreateRequest,
     db: AsyncSession = Depends(get_db),
     current_user: TokenPayload = Depends(get_current_user),
-):
+) -> SpaceResponse:
     """Mentor creates a new e-learning space under a department.
     Auto-generates a unique invite code. Space is unpublished by default."""
     service = SpaceService(db)
@@ -54,7 +54,7 @@ async def list_spaces(
     params: PageParams = Depends(),
     db: AsyncSession = Depends(get_db),
     current_user: TokenPayload = Depends(get_current_user),
-):
+) -> SpaceListResponse:
     """Return all active spaces where the caller is the effective owner (mentor)
     or is an enrolled member (trainee)."""
     service = SpaceService(db)
@@ -66,7 +66,7 @@ async def get_space(
     space_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: TokenPayload = Depends(get_current_user),
-):
+) -> SpaceResponse:
     """Fetch a single space by ID. Mentor must be effective owner.
     Trainee must be an active member of the space."""
     service = SpaceService(db)
@@ -79,10 +79,12 @@ async def update_space(
     payload: SpaceUpdateRequest,
     db: AsyncSession = Depends(get_db),
     current_user: TokenPayload = Depends(get_current_user),
-):
+) -> SpaceResponse:
     """Mentor partially updates space metadata (name, description). Only provided fields are applied."""
     service = SpaceService(db)
-    return await service.update_space(space_id, payload, current_user.sub, current_user.role)
+    return await service.update_space(
+        space_id, payload, current_user.sub, current_user.role
+    )
 
 
 @router.patch("/{space_id}/publish", response_model=SpaceResponse)
@@ -91,11 +93,13 @@ async def publish_space(
     payload: SpacePublishRequest,
     db: AsyncSession = Depends(get_db),
     current_user: TokenPayload = Depends(get_current_user),
-):
+) -> SpaceResponse:
     """Mentor publishes or unpublishes a space. Published spaces are
     visible and joinable by trainees. Unpublishing does not remove members."""
     service = SpaceService(db)
-    return await service.publish_space(space_id, payload, current_user.sub, current_user.role)
+    return await service.publish_space(
+        space_id, payload, current_user.sub, current_user.role
+    )
 
 
 @router.patch("/{space_id}/transfer-ownership", response_model=SpaceResponse)
@@ -104,7 +108,7 @@ async def transfer_ownership(
     payload: SpaceTransferOwnershipRequest,
     db: AsyncSession = Depends(get_db),
     current_user: TokenPayload = Depends(get_current_user),
-):
+) -> SpaceResponse:
     """ITAdmin transfers a space's effective ownership to another active mentor.
     Called during mentor deactivation flow (EC-27). Original mentor_id is
     preserved as the audit owner; transferred_to_mentor_id is the new UI owner."""
@@ -117,10 +121,12 @@ async def list_space_trainees(
     space_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: TokenPayload = Depends(get_current_user),
-):
+) -> list[SpaceMemberSummary]:
     """Mentor lists all active trainees enrolled in a space."""
     service = SpaceService(db)
-    return await service.list_space_trainees(space_id, current_user.sub, current_user.role)
+    return await service.list_space_trainees(
+        space_id, current_user.sub, current_user.role
+    )
 
 
 @router.post("/{space_id}/trainees", status_code=status.HTTP_200_OK)
@@ -129,11 +135,13 @@ async def add_trainees(
     payload: SpaceAddTraineesRequest,
     db: AsyncSession = Depends(get_db),
     current_user: TokenPayload = Depends(get_current_user),
-):
+) -> dict[str, object]:
     """Mentor manually adds one or more trainees to the space.
     Already-active members in the batch are silently skipped."""
     service = SpaceService(db)
-    return await service.add_trainees(space_id, payload, current_user.sub, current_user.role)
+    return await service.add_trainees(
+        space_id, payload, current_user.sub, current_user.role
+    )
 
 
 @router.delete("/{space_id}/trainees", status_code=status.HTTP_200_OK)
@@ -142,11 +150,13 @@ async def remove_trainee(
     payload: SpaceRemoveTraineeRequest,
     db: AsyncSession = Depends(get_db),
     current_user: TokenPayload = Depends(get_current_user),
-):
+) -> dict[str, str]:
     """Mentor soft-removes a trainee from a space (space_trainees.is_active = false).
     Historical progress and attempt data are fully preserved (EC-13, EC-15)."""
     service = SpaceService(db)
-    return await service.remove_trainee(space_id, payload, current_user.sub, current_user.role)
+    return await service.remove_trainee(
+        space_id, payload, current_user.sub, current_user.role
+    )
 
 
 @router.post("/join", response_model=SpaceJoinResponse, status_code=status.HTTP_200_OK)
@@ -154,7 +164,7 @@ async def join_space(
     payload: SpaceJoinRequest,
     db: AsyncSession = Depends(get_db),
     current_user: TokenPayload = Depends(get_current_user),
-):
+) -> SpaceJoinResponse:
     """Trainee joins a published space using a valid invite code.
     Already-active members receive a 409. Previously removed trainees
     cannot rejoin by invite code; only mentor manual add can reactivate them."""

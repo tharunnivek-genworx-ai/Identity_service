@@ -10,4 +10,3 @@ def setup_cors(app: FastAPI) -> None:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-

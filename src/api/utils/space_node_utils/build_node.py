@@ -3,7 +3,6 @@ from uuid import UUID
 from src.api.data.models.postgres.e_spaces_trees.topic_nodes import TopicNode
 from src.api.schemas.space_node_schemas.node_schema import NodeResponse, NodeTreeNode
 
-
 # ── Instruction resolver ────────────────────────────────────────────────────────
 
 
@@ -72,7 +71,7 @@ def resolve_effective_instruction(
 # ── Response builders ───────────────────────────────────────────────────────────
 
 
-def _build_node_response(node) -> NodeResponse:
+def _build_node_response(node: TopicNode) -> NodeResponse:
     return NodeResponse(
         node_id=node.node_id,
         space_id=node.space_id,

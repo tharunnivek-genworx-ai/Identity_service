@@ -23,6 +23,7 @@ class TokenPayload(BaseModel):
         jti  — JWT ID (unique per token). Required to support logout/revocation:
                store jti in a refresh_token_blocklist table and reject reuse.
     """
+
     sub: UUID
     role: Literal["itadmin", "mentor", "trainee"]
     exp: int
@@ -40,6 +41,7 @@ class LoginResponse(Token):
     Returned on successful login.
     refresh_token_expires_in_days matches the design doc (7 days).
     """
+
     refresh_token: str
     refresh_token_expires_in_days: int = 7
 
@@ -53,4 +55,5 @@ class LogoutRequest(BaseModel):
     The refresh_token must be sent so the server can extract its jti
     and add it to the blocklist, preventing reuse after logout.
     """
+
     refresh_token: str

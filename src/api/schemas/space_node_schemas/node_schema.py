@@ -35,11 +35,9 @@ Partial-update semantics for PATCH /nodes/{id}/instruction:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
-
 
 # ── Create ─────────────────────────────────────────────────────────────────
 
@@ -53,24 +51,24 @@ class NodeCreateRequest(BaseModel):
     """
 
     title: str = Field(..., min_length=1, max_length=300)
-    parent_id: Optional[UUID] = Field(
+    parent_id: UUID | None = Field(
         default=None,
         description="NULL for root nodes. Must belong to the same space.",
     )
-    order_index: Optional[int] = Field(
+    order_index: int | None = Field(
         default=None,
         ge=0,
         description="Explicit sibling position. Omit to auto-append.",
     )
-    node_specific_instruction: Optional[str] = Field(
+    node_specific_instruction: str | None = Field(
         default=None,
         description="Full override for this node only. Ignores inherited defaults when set.",
     )
-    tree_default_instruction: Optional[str] = Field(
+    tree_default_instruction: str | None = Field(
         default=None,
         description="Default instruction inherited by all descendants of this node.",
     )
-    node_additive_instruction: Optional[str] = Field(
+    node_additive_instruction: str | None = Field(
         default=None,
         description=(
             "Additive instruction for this node only. "
@@ -114,9 +112,9 @@ class NodeUpdateInstructionRequest(BaseModel):
       node_additive_instruction  — additive extra for this node only; not inherited
     """
 
-    node_specific_instruction: Optional[str] = Field(default=None)
-    tree_default_instruction: Optional[str] = Field(default=None)
-    node_additive_instruction: Optional[str] = Field(default=None)
+    node_specific_instruction: str | None = Field(default=None)
+    tree_default_instruction: str | None = Field(default=None)
+    node_additive_instruction: str | None = Field(default=None)
 
 
 # ── Reparent ───────────────────────────────────────────────────────────────
@@ -130,11 +128,11 @@ class NodeReparentRequest(BaseModel):
     new_order_index controls position among new siblings.
     """
 
-    new_parent_id: Optional[UUID] = Field(
+    new_parent_id: UUID | None = Field(
         default=None,
         description="Target parent node. None = promote to root.",
     )
-    new_order_index: Optional[int] = Field(
+    new_order_index: int | None = Field(
         default=None,
         ge=0,
         description="Position among new siblings. Omit to auto-append.",
@@ -192,13 +190,13 @@ class NodeResponse(BaseModel):
 
     node_id: UUID
     space_id: UUID
-    parent_id: Optional[UUID]
+    parent_id: UUID | None
     title: str
     level: int
     order_index: int
-    node_specific_instruction: Optional[str]
-    tree_default_instruction: Optional[str]
-    node_additive_instruction: Optional[str]
+    node_specific_instruction: str | None
+    tree_default_instruction: str | None
+    node_additive_instruction: str | None
     is_primary_learning_unit: bool
     is_active: bool
     created_by: UUID
@@ -206,8 +204,8 @@ class NodeResponse(BaseModel):
     updated_at: datetime
 
     # Phase 2 fields — present in response but None in MVP
-    source_pdf_id: Optional[UUID]
-    source_section_path: Optional[str]
+    source_pdf_id: UUID | None
+    source_section_path: str | None
     auto_generated: bool
 
 
@@ -224,13 +222,13 @@ class NodeTreeNode(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     node_id: UUID
-    parent_id: Optional[UUID]
+    parent_id: UUID | None
     title: str
     level: int
     order_index: int
-    node_specific_instruction: Optional[str]
-    tree_default_instruction: Optional[str]
-    node_additive_instruction: Optional[str]
+    node_specific_instruction: str | None
+    tree_default_instruction: str | None
+    node_additive_instruction: str | None
     is_active: bool
     auto_generated: bool
     children: list[NodeTreeNode] = Field(default_factory=list)

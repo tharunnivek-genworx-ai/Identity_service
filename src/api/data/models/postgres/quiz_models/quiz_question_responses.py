@@ -1,17 +1,18 @@
 import uuid
 
-from sqlalchemy import Column, String, Boolean, Integer, ForeignKey, UniqueConstraint
-from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
 from sqlalchemy.orm import relationship
 
 from src.api.data.clients.postgres.database import Base
-from src.api.utils.time import utc_now
 
 
 class QuizQuestionResponse(Base):
     __tablename__ = "quizquestionresponses"
 
-    response_id = Column("responseid", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    response_id = Column(
+        "responseid", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
 
     attempt_id = Column(
         "attemptid",
@@ -50,7 +51,9 @@ class QuizQuestionResponse(Base):
     responded_at = Column("respondedat", TIMESTAMP(timezone=True), nullable=True)
 
     __table_args__ = (
-        UniqueConstraint("attemptid", "questionid", name="uq_quizquestionresponses_attempt_question"),
+        UniqueConstraint(
+            "attemptid", "questionid", name="uq_quizquestionresponses_attempt_question"
+        ),
     )
 
     attempt = relationship("QuizAttempt", back_populates="responses")
