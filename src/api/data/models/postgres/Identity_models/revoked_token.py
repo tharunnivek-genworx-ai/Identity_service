@@ -48,7 +48,8 @@ class RevokedToken(Base):
 
     # revokedat lets the cleanup job find and purge expired entries.
     # It is also useful for audit: "when did this user log out?"
-    revokedat = Column(
+    revoked_at = Column(
+        "revokedat",
         TIMESTAMP(timezone=True),
         nullable=False,
         default=utc_now,

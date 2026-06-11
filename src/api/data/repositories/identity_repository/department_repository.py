@@ -19,19 +19,19 @@ class DepartmentRepository:
 
     async def get_by_id(self, department_id: UUID) -> Department | None:
         result = await self.db.execute(
-            select(Department).where(Department.departmentid == department_id)
+            select(Department).where(Department.department_id == department_id)
         )
         return result.scalars().first()
 
     async def get_by_code(self, code: str) -> Department | None:
         result = await self.db.execute(
-            select(Department).where(Department.departmentcode == code)
+            select(Department).where(Department.department_code == code)
         )
         return result.scalars().first()
 
     async def get_by_name(self, name: str) -> Department | None:
         result = await self.db.execute(
-            select(Department).where(Department.departmentname == name)
+            select(Department).where(Department.department_name == name)
         )
         return result.scalars().first()
 
@@ -44,7 +44,7 @@ class DepartmentRepository:
 
         result = await self.db.execute(
             select(Department)
-            .order_by(Department.createdat.desc())
+            .order_by(Department.created_at.desc())
             .offset(skip)
             .limit(limit)
         )
@@ -52,18 +52,18 @@ class DepartmentRepository:
 
     async def create(
         self,
-        departmentname: str,
-        departmentcode: str,
+        department_name: str,
+        department_code: str,
         description: str | None,
-        isactive: bool,
-        createdby: UUID,
+        is_active: bool,
+        created_by: UUID,
     ) -> Department:
         dept = Department(
-            departmentname=departmentname,
-            departmentcode=departmentcode,
+            department_name=department_name,
+            department_code=department_code,
             description=description,
-            isactive=isactive,
-            createdby=createdby,
+            is_active=is_active,
+            created_by=created_by,
         )
         self.db.add(dept)
         await self.db.flush()
@@ -75,7 +75,7 @@ class DepartmentRepository:
         """Apply a dict of field→value updates to the department and commit."""
         for field, value in updates.items():
             setattr(department, field, value)
-        department.updatedat = datetime.now(timezone.utc)
+        department.updated_at = datetime.now(timezone.utc)
         await self.db.commit()
         await self.db.refresh(department)
         return department
@@ -87,8 +87,8 @@ class DepartmentRepository:
             select(func.count())
             .select_from(Mentor)
             .where(
-                Mentor.departmentid == department_id,
-                Mentor.isactive == True,
+                Mentor.department_id == department_id,
+                Mentor.is_active == True,
             )
         )
         mentor_count = mentor_result.scalar_one()
@@ -97,8 +97,8 @@ class DepartmentRepository:
             select(func.count())
             .select_from(Trainee)
             .where(
-                Trainee.departmentid == department_id,
-                Trainee.isactive == True,
+                Trainee.department_id == department_id,
+                Trainee.is_active == True,
             )
         )
         trainee_count = trainee_result.scalar_one()
