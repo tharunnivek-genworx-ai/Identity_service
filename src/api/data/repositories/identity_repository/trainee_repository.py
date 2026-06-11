@@ -17,7 +17,7 @@ class TraineeRepository:
 
     async def get_by_id(self, trainee_id: UUID) -> Trainee | None:
         result = await self.db.execute(
-            select(Trainee).where(Trainee.traineeid == trainee_id)
+            select(Trainee).where(Trainee.trainee_id == trainee_id)
         )
         return result.scalars().first()
 
@@ -29,7 +29,7 @@ class TraineeRepository:
 
     async def get_by_employee_id(self, employee_id: str) -> Trainee | None:
         result = await self.db.execute(
-            select(Trainee).where(Trainee.employeeid == employee_id)
+            select(Trainee).where(Trainee.employee_id == employee_id)
         )
         return result.scalars().first()
 
@@ -41,7 +41,7 @@ class TraineeRepository:
 
         result = await self.db.execute(
             select(Trainee)
-            .order_by(Trainee.createdat.desc())
+            .order_by(Trainee.created_at.desc())
             .offset(skip)
             .limit(limit)
         )
@@ -50,29 +50,29 @@ class TraineeRepository:
     async def create(
         self,
         email: str,
-        passwordhash: str,
-        fullname: str,
-        departmentid: UUID,
-        createdby: UUID,
-        employeeid: str | None = None,
+        password_hash: str,
+        full_name: str,
+        department_id: UUID,
+        created_by: UUID,
+        employee_id: str | None = None,
         dob: date | None = None,
         phone: str | None = None,
-        profilepictureurl: str | None = None,
-        joiningdate: date | None = None,
-        isactive: bool = True,
+        profile_picture_url: str | None = None,
+        joining_date: date | None = None,
+        is_active: bool = True,
     ) -> Trainee:
         trainee = Trainee(
             email=email,
-            passwordhash=passwordhash,
-            fullname=fullname,
-            departmentid=departmentid,
-            createdby=createdby,
-            employeeid=employeeid,
+            password_hash=password_hash,
+            full_name=full_name,
+            department_id=department_id,
+            created_by=created_by,
+            employee_id=employee_id,
             dob=dob,
             phone=phone,
-            profilepictureurl=profilepictureurl,
-            joiningdate=joiningdate,
-            isactive=isactive,
+            profile_picture_url=profile_picture_url,
+            joining_date=joining_date,
+            is_active=is_active,
         )
         self.db.add(trainee)
         await self.db.flush()
@@ -83,25 +83,39 @@ class TraineeRepository:
     async def update(self, trainee: Trainee, updates: dict) -> Trainee:
         for field, value in updates.items():
             setattr(trainee, field, value)
-        trainee.updatedat = datetime.now(timezone.utc)
+        trainee.updated_at = datetime.now(timezone.utc)
         await self.db.commit()
         await self.db.refresh(trainee)
         return trainee
 
     async def deactivate(self, trainee: Trainee) -> Trainee:
-        """Soft-delete: set isactive=False and stamp deletedat (EC-28)."""
-        trainee.isactive = False
-        trainee.deletedat = datetime.now(timezone.utc)
-        trainee.updatedat = datetime.now(timezone.utc)
+        """Soft-delete: set is_active=False and stamp deleted_at (EC-28)."""
+        trainee.is_active = False
+        trainee.deleted_at = datetime.now(timezone.utc)
+        trainee.updated_at = datetime.now(timezone.utc)
         await self.db.commit()
         await self.db.refresh(trainee)
         return trainee
 
     async def reactivate(self, trainee: Trainee) -> Trainee:
-        """Reverse soft-delete: clear deletedat, set isactive=True (EC-29)."""
-        trainee.isactive = True
-        trainee.deletedat = None
-        trainee.updatedat = datetime.now(timezone.utc)
+        """Reverse soft-delete: clear deleted_at, set is_active=True (EC-29)."""
+        trainee.is_active = True
+        trainee.deleted_at = None
+        trainee.updated_at = datetime.now(timezone.utc)
         await self.db.commit()
         await self.db.refresh(trainee)
         return trainee
+
+    async def search_trainees(self, query: str, limit: int = 20) -> list[Trainee]:
+        """Search trainees by name, email, or employee ID."""
+        search_term = f"%{query}%"
+        result = await self.db.execute(
+            select(Trainee)
+            .where(
+                (Trainee.full_name.ilike(search_term)) |
+                (Trainee.email.ilike(search_term)) |
+                (Trainee.employee_id.ilike(search_term))
+            )
+            .limit(limit)
+        )
+        return list(result.scalars().all())
