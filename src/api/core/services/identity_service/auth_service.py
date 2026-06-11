@@ -53,18 +53,18 @@ class AuthService:
             raise InvalidCredentialsException()
 
         # Account must be active before we check the password
-        if not user.isactive:
+        if not user.is_active:
             raise AccountDeactivatedException()
 
         # Verify password
-        if not verify_password(request.password, user.passwordhash):
+        if not verify_password(request.password, user.password_hash):
             raise InvalidCredentialsException()
 
         # Resolve the PK field name per role
         user_id_field = {
-            "itadmin": "itadminid",
-            "mentor": "mentorid",
-            "trainee": "traineeid",
+            "itadmin": "it_admin_id",
+            "mentor": "mentor_id",
+            "trainee": "trainee_id",
         }[role]
         user_id = str(getattr(user, user_id_field))
 
