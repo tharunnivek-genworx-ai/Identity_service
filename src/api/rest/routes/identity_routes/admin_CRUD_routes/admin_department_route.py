@@ -20,6 +20,7 @@ from src.api.schemas.identity_schemas.listing_endpoints import DepartmentListRes
 router = APIRouter(prefix="/admin/departments", tags=["IT Admin"])
 
 ITAdminUser = Annotated[TokenPayload, Depends(require_role("itadmin"))]
+ITAdminOrMentorUser = Annotated[TokenPayload, Depends(require_role("itadmin", "mentor"))]
 
 
 @router.post("", response_model=DepartmentOut, status_code=201)
@@ -36,7 +37,7 @@ async def create_department(
 
 @router.get("", response_model=DepartmentListResponse)
 async def list_departments(
-    current_user: ITAdminUser,
+    current_user: ITAdminOrMentorUser,
     params: PageParams = Depends(),
     db: AsyncSession = Depends(get_db),
 ):
@@ -48,7 +49,7 @@ async def list_departments(
 @router.get("/{department_id}", response_model=DepartmentOut)
 async def get_department(
     department_id: UUID,
-    current_user: ITAdminUser,
+    current_user: ITAdminOrMentorUser,
     db: AsyncSession = Depends(get_db),
 ):
     """Fetch a single department by ID."""

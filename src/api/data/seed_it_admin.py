@@ -29,23 +29,23 @@ async def seed_it_admin() -> None:
 
         if admin is None:
             admin = ITAdmin(
-                itadminid=ADMIN_ID,
+                it_admin_id=ADMIN_ID,
                 email=ADMIN_EMAIL,
-                passwordhash=hash_password(ADMIN_PASSWORD),
-                fullname=ADMIN_FULLNAME,
+                password_hash=hash_password(ADMIN_PASSWORD),
+                full_name=ADMIN_FULLNAME,
                 phone=ADMIN_PHONE,
-                isactive=True,
-                createdat=utc_now(),
-                updatedat=utc_now(),
+                is_active=True,
+                created_at=utc_now(),
+                updated_at=utc_now(),
             )
             session.add(admin)
         else:
-            admin.passwordhash = hash_password(ADMIN_PASSWORD)
-            admin.fullname = ADMIN_FULLNAME
+            admin.password_hash = hash_password(ADMIN_PASSWORD)
+            admin.full_name = ADMIN_FULLNAME
             admin.phone = ADMIN_PHONE
-            admin.isactive = True
-            admin.deletedat = None
-            admin.updatedat = utc_now()
+            admin.is_active = True
+            admin.deleted_at = None
+            admin.updated_at = utc_now()
 
         await session.commit()
         print(f"Seeded IT admin: {ADMIN_EMAIL}")
