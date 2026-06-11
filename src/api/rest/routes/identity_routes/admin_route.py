@@ -9,8 +9,9 @@ Admin routes are split by resource in:
 
 from fastapi import APIRouter
 
-from src.api.rest.routes.identity_routes.admin_CRUD_routes import admin_department_route, admin_mentor_route
 from src.api.rest.routes.identity_routes.admin_CRUD_routes import (
+    admin_department_route,
+    admin_mentor_route,
     admin_trainee_route,
 )
 

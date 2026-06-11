@@ -24,29 +24,29 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.data.repositories.space_node_repository.node_repository import (
-    NodeRepository,
-    UNSET,
-)
-from src.api.schemas.space_node_schemas.node_schema import (
-    NodeCreateRequest,
-    NodeRenameRequest,
-    NodeUpdateInstructionRequest,
-    NodeReparentRequest,
-    NodeReorderRequest,
-    NodeArchiveRequest,
-    NodeResponse,
-    NodeTreeResponse,
-)
 from src.api.core.exceptions.space_node_exceptions.node_exceptions import (
-    NodeNotFoundException,
     NodeAlreadyArchivedException,
     NodeArchivedModificationException,
-    NodeParentSpaceMismatchException,
     NodeCircularReferenceException,
+    NodeNotFoundException,
     NodeParentArchivedException,
-    NodeReorderSiblingMismatchException,
+    NodeParentSpaceMismatchException,
     NodeReorderIncompleteException,
+    NodeReorderSiblingMismatchException,
+)
+from src.api.data.repositories.space_node_repository.node_repository import (
+    UNSET,
+    NodeRepository,
+)
+from src.api.schemas.space_node_schemas.node_schema import (
+    NodeArchiveRequest,
+    NodeCreateRequest,
+    NodeRenameRequest,
+    NodeReorderRequest,
+    NodeReparentRequest,
+    NodeResponse,
+    NodeTreeResponse,
+    NodeUpdateInstructionRequest,
 )
 from src.api.utils.space_node_utils.build_node import _build_node_response, _build_tree
 from src.api.utils.space_node_utils.node_role_assert import (
@@ -57,9 +57,7 @@ from src.api.utils.space_node_utils.node_role_assert import (
 )
 
 
-
 class NodeService:
-
     def __init__(self, session: AsyncSession):
         self.session = session
 
@@ -104,7 +102,9 @@ class NodeService:
 
     # ── get tree ───────────────────────────────────────────────────────
 
-    async def get_tree(self, space_id: UUID, user_id: UUID, role: str) -> NodeTreeResponse:
+    async def get_tree(
+        self, space_id: UUID, user_id: UUID, role: str
+    ) -> NodeTreeResponse:
         """Return the full recursive tree for a space. Only active nodes included."""
         await _assert_space_access(self.session, space_id, user_id, role)
 
@@ -154,12 +154,16 @@ class NodeService:
     # ── update instruction ─────────────────────────────────────────────
 
     async def update_node_instruction(
-        self, node_id: UUID, request: NodeUpdateInstructionRequest, user_id: UUID, role: str
+        self,
+        node_id: UUID,
+        request: NodeUpdateInstructionRequest,
+        user_id: UUID,
+        role: str,
     ) -> NodeResponse:
         """Partial update for node instruction fields.
 
         Three instruction modes:
-          node_specific_instruction  — full override; when set, inherited defaults ignored
+          node_specific_instruction  — full override; ignores inherited defaults
           tree_default_instruction   — default inherited by all descendants
           node_additive_instruction  — additive extra for this node only; NOT inherited
 
@@ -240,7 +244,9 @@ class NodeService:
         # Resolve new order_index
         new_order_index = request.new_order_index
         if new_order_index is None:
-            new_order_index = await repo.get_next_order_index(node.space_id, new_parent_id)
+            new_order_index = await repo.get_next_order_index(
+                node.space_id, new_parent_id
+            )
 
         node = await repo.reparent_node(node, new_parent_id, new_level, new_order_index)
         return _build_node_response(node)
@@ -271,8 +277,11 @@ class NodeService:
         shared_parent_id = next(iter(parent_ids))
 
         # All siblings under that parent must be present in the payload
-        all_siblings = await repo.get_children(shared_parent_id) if shared_parent_id else \
-                       await repo.get_root_nodes(space_id)
+        all_siblings = (
+            await repo.get_children(shared_parent_id)
+            if shared_parent_id
+            else await repo.get_root_nodes(space_id)
+        )
         all_sibling_ids = {s.node_id for s in all_siblings if s.is_active}
         payload_ids = set(node_ids)
         if all_sibling_ids != payload_ids:

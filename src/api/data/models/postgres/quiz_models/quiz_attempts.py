@@ -1,7 +1,7 @@
 import uuid
 
-from sqlalchemy import Column, String, Boolean, Float, Integer, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
+from sqlalchemy import Column, Float, ForeignKey, Integer, String
+from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
 from sqlalchemy.orm import relationship
 
 from src.api.data.clients.postgres.database import Base
@@ -11,7 +11,9 @@ from src.api.utils.time import utc_now
 class QuizAttempt(Base):
     __tablename__ = "quizattempts"
 
-    attempt_id = Column("attemptid", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    attempt_id = Column(
+        "attemptid", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
 
     quiz_id = Column(
         "quizid",
@@ -43,12 +45,16 @@ class QuizAttempt(Base):
     # in_progress enables mid-quiz resume (EC-7); same row reused on resume (EC-8)
     status = Column(String(20), nullable=False, default="in_progress")
 
-    score = Column(Float, nullable=True)            # calculated on submit
+    score = Column(Float, nullable=True)  # calculated on submit
     total_correct = Column("totalcorrect", Integer, nullable=True)
-    total_with_hints = Column("totalwithhints", Integer, nullable=True) # correct answers that needed hints
+    total_with_hints = Column(
+        "totalwithhints", Integer, nullable=True
+    )  # correct answers that needed hints
     total_skipped = Column("totalskipped", Integer, nullable=True)
 
-    started_at = Column("startedat", TIMESTAMP(timezone=True), nullable=False, default=utc_now)
+    started_at = Column(
+        "startedat", TIMESTAMP(timezone=True), nullable=False, default=utc_now
+    )
     submitted_at = Column("submittedat", TIMESTAMP(timezone=True), nullable=True)
 
     quiz = relationship("Quiz", back_populates="attempts")

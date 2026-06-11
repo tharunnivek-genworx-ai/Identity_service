@@ -1,7 +1,7 @@
 import uuid
 
-from sqlalchemy import Column, String, Boolean, Text, Integer, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
 from sqlalchemy.orm import relationship
 
 from src.api.data.clients.postgres.database import Base
@@ -35,8 +35,12 @@ class ChatMessage(Base):
     content = Column(Text, nullable=False)
 
     tokencount = Column(Integer, nullable=True)
-    llmmodelused = Column(String(100), nullable=True)       # e.g. llama-3.3-70b; NULL for user messages
-    contextwindowsnapshot = Column(Text, nullable=True)     # serialized context sent to LLM at this call
+    llmmodelused = Column(
+        String(100), nullable=True
+    )  # e.g. llama-3.3-70b; NULL for user messages
+    contextwindowsnapshot = Column(
+        Text, nullable=True
+    )  # serialized context sent to LLM at this call
 
     createdat = Column(TIMESTAMP(timezone=True), nullable=False, default=utc_now)
     isdeleted = Column(Boolean, nullable=False, default=False)  # soft delete

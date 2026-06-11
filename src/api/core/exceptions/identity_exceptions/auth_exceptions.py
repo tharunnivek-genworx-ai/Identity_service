@@ -8,15 +8,16 @@ services) means every layer can raise them without circular imports.
 
 from fastapi import HTTPException, status
 
-
 # ─────────────────────────────────────────────
 # AUTH EXCEPTIONS
 # ─────────────────────────────────────────────
 
+
 class InvalidCredentialsException(HTTPException):
     """Raised when email/password combination does not match any account.
     Deliberately vague — do not reveal whether the email exists."""
-    def __init__(self):
+
+    def __init__(self) -> None:
         super().__init__(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password.",
@@ -26,7 +27,8 @@ class InvalidCredentialsException(HTTPException):
 
 class InvalidTokenException(HTTPException):
     """Raised when a JWT access or refresh token is missing, expired, or tampered."""
-    def __init__(self, detail: str = "Token is invalid or expired."):
+
+    def __init__(self, detail: str = "Token is invalid or expired.") -> None:
         super().__init__(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=detail,
@@ -37,7 +39,8 @@ class InvalidTokenException(HTTPException):
 class TokenRevokedException(HTTPException):
     """Raised when a refresh token's jti appears in the revocation blocklist.
     Covers logout-then-reuse attacks."""
-    def __init__(self):
+
+    def __init__(self) -> None:
         super().__init__(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has been revoked. Please log in again.",
@@ -47,7 +50,8 @@ class TokenRevokedException(HTTPException):
 
 class InsufficientPermissionsException(HTTPException):
     """Raised when the authenticated user's role is not allowed to access the route."""
-    def __init__(self, required_role: str = ""):
+
+    def __init__(self, required_role: str = "") -> None:
         detail = (
             f"Access denied. Required role: {required_role}."
             if required_role
@@ -61,10 +65,9 @@ class InsufficientPermissionsException(HTTPException):
 
 class AccountDeactivatedException(HTTPException):
     """Raised when a deactivated (is_active=False) account attempts to log in."""
-    def __init__(self):
+
+    def __init__(self) -> None:
         super().__init__(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="This account has been deactivated. Contact your IT Admin.",
         )
-
-

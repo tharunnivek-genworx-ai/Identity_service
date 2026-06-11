@@ -1,7 +1,7 @@
 import uuid
 
-from sqlalchemy import Column, String, Boolean, Text, BigInteger, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
+from sqlalchemy import BigInteger, Boolean, Column, ForeignKey, String, Text
+from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
 from sqlalchemy.orm import relationship
 
 from src.api.data.clients.postgres.database import Base
@@ -26,7 +26,7 @@ class ReferenceMaterial(Base):
     )
 
     title = Column(String(300), nullable=False)
-    fileurl = Column(Text, nullable=False)          # GCS signed URL
+    fileurl = Column(Text, nullable=False)  # GCS signed URL
     filename = Column(String(300), nullable=False)  # original filename
     filesizebytes = Column(BigInteger, nullable=True)
     mimetype = Column(String(100), nullable=False)  # e.g. application/pdf
@@ -40,7 +40,9 @@ class ReferenceMaterial(Base):
         nullable=False,
     )
     createdat = Column(TIMESTAMP(timezone=True), nullable=False, default=utc_now)
-    updatedat = Column(TIMESTAMP(timezone=True), nullable=False, default=utc_now, onupdate=utc_now)
+    updatedat = Column(
+        TIMESTAMP(timezone=True), nullable=False, default=utc_now, onupdate=utc_now
+    )
     # Soft delete on replacement — old row preserved for audit; new row gets new materialid (EC-17)
     deletedat = Column(TIMESTAMP(timezone=True), nullable=True)
 
@@ -48,4 +50,6 @@ class ReferenceMaterial(Base):
     node = relationship("TopicNode", foreign_keys=[nodeid])
     uploaded_by_mentor = relationship("Mentor", foreign_keys=[uploadedby])
     node_media = relationship("NodeMedia", back_populates="source_pdf_material")
-    study_material_versions = relationship("StudyMaterialVersion", back_populates="reference_material")
+    study_material_versions = relationship(
+        "StudyMaterialVersion", back_populates="reference_material"
+    )

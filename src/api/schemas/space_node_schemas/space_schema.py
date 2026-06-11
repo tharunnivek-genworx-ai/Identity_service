@@ -16,10 +16,10 @@ these schemas only carry raw field values.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Generic, Optional, TypeVar
+from typing import TypeVar
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 T = TypeVar("T")
 
@@ -31,7 +31,7 @@ class SpaceCreateRequest(BaseModel):
     """Mentor creates a new e-learning space."""
 
     space_name: str = Field(..., min_length=1, max_length=200)
-    description: Optional[str] = Field(default=None)
+    description: str | None = Field(default=None)
     department_id: UUID
     # invite_code is auto-generated at service layer; not accepted from client
 
@@ -42,8 +42,8 @@ class SpaceCreateRequest(BaseModel):
 class SpaceUpdateRequest(BaseModel):
     """Partial update — all fields optional. Only provided fields are applied."""
 
-    space_name: Optional[str] = Field(default=None, min_length=1, max_length=200)
-    description: Optional[str] = Field(default=None)
+    space_name: str | None = Field(default=None, min_length=1, max_length=200)
+    description: str | None = Field(default=None)
 
 
 # ── Publish ────────────────────────────────────────────────────────────────
@@ -128,17 +128,17 @@ class SpaceResponse(BaseModel):
 
     space_id: UUID
     space_name: str
-    description: Optional[str]
+    description: str | None
     department_id: UUID
     mentor_id: UUID
-    transferred_to_mentor_id: Optional[UUID]
+    transferred_to_mentor_id: UUID | None
     effective_mentor_id: UUID  # resolved at service layer
-    invite_code: Optional[str]
+    invite_code: str | None
     is_published: bool
     is_active: bool
     created_at: datetime
     updated_at: datetime
-    archived_at: Optional[datetime]
+    archived_at: datetime | None
 
 
 class PageParams(BaseModel):
@@ -148,7 +148,7 @@ class PageParams(BaseModel):
     limit: int = Field(default=20, ge=1, le=100, description="Items per page, max 100")
 
 
-class PaginatedResponse(BaseModel, Generic[T]):
+class PaginatedResponse[T](BaseModel):
     """Generic paginated wrapper for space/topic response payloads."""
 
     items: list[T]

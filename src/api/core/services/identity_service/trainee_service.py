@@ -10,27 +10,41 @@ Endpoints served (Section 3.5.2):
 """
 
 import math
+from typing import cast
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.data.repositories.identity_repository.trainee_repository import TraineeRepository
-from src.api.data.repositories.identity_repository.department_repository import DepartmentRepository
-from src.api.schemas.identity_schemas.trainees_schema import TraineeCreate, TraineeOut, TraineeDeactivateRequest, TraineeReactivateRequest
-from src.api.schemas.identity_schemas.listing_endpoints import TraineeListResponse, PageParams
+from src.api.core.exceptions.identity_exceptions.department_exceptions import (
+    DepartmentNotFoundException,
+)
 from src.api.core.exceptions.identity_exceptions.trainee_exceptions import (
-    TraineeNotFoundException,
+    TraineeAlreadyActiveException,
+    TraineeAlreadyDeactivatedException,
     TraineeEmailAlreadyExistsException,
     TraineeEmployeeIdAlreadyExistsException,
-    TraineeAlreadyDeactivatedException,
-    TraineeAlreadyActiveException,
+    TraineeNotFoundException,
 )
-from src.api.core.exceptions.identity_exceptions.department_exceptions import DepartmentNotFoundException
+from src.api.data.repositories.identity_repository.department_repository import (
+    DepartmentRepository,
+)
+from src.api.data.repositories.identity_repository.trainee_repository import (
+    TraineeRepository,
+)
+from src.api.schemas.identity_schemas.listing_endpoints import (
+    PageParams,
+    TraineeListResponse,
+)
+from src.api.schemas.identity_schemas.trainees_schema import (
+    TraineeCreate,
+    TraineeDeactivateRequest,
+    TraineeOut,
+    TraineeReactivateRequest,
+)
 from src.api.utils.password import hash_password
 
 
 class TraineeService:
-
     def __init__(self, session: AsyncSession):
         self.session = session
 
@@ -70,7 +84,7 @@ class TraineeService:
             joining_date=payload.joining_date,
             is_active=payload.is_active,
         )
-        return TraineeOut.model_validate(trainee)
+        return cast(TraineeOut, TraineeOut.model_validate(trainee))
 
     async def list_trainees(self, params: PageParams) -> TraineeListResponse:
         repo = TraineeRepository(self.session)
@@ -91,14 +105,14 @@ class TraineeService:
         trainee = await repo.get_by_id(trainee_id)
         if not trainee:
             raise TraineeNotFoundException(str(trainee_id))
-        return TraineeOut.model_validate(trainee)
+        return cast(TraineeOut, TraineeOut.model_validate(trainee))
 
     async def deactivate_trainee(
         self,
         trainee_id: UUID,
         payload: TraineeDeactivateRequest,
     ) -> TraineeOut:
-        """Soft-delete a trainee. All progress and attempt history is retained (EC-28)."""
+        """Soft-delete a trainee. Progress and attempt history retained (EC-28)."""
         repo = TraineeRepository(self.session)
 
         trainee = await repo.get_by_id(trainee_id)
@@ -109,7 +123,7 @@ class TraineeService:
             raise TraineeAlreadyDeactivatedException()
 
         trainee = await repo.deactivate(trainee)
-        return TraineeOut.model_validate(trainee)
+        return cast(TraineeOut, TraineeOut.model_validate(trainee))
 
     async def reactivate_trainee(
         self,
@@ -127,7 +141,7 @@ class TraineeService:
             raise TraineeAlreadyActiveException()
 
         trainee = await repo.reactivate(trainee)
-        return TraineeOut.model_validate(trainee)
+        return cast(TraineeOut, TraineeOut.model_validate(trainee))
 
     async def search_trainees(self, query: str, limit: int = 20) -> list[TraineeOut]:
         """Search trainees by name, email, or employee ID for mentor assignment."""

@@ -3,15 +3,16 @@
 itadmins, mentors, and trainees. Each role lives in its own table —
 there is no shared User table in StudyGuru."""
 
+from typing import cast
 from uuid import UUID
+
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
-from datetime import datetime, timezone
 
 from src.api.data.models.postgres.Identity_models.it_admin import ITAdmin
 from src.api.data.models.postgres.Identity_models.mentors import Mentor
-from src.api.data.models.postgres.Identity_models.trainees import Trainee
 from src.api.data.models.postgres.Identity_models.revoked_token import RevokedToken
+from src.api.data.models.postgres.Identity_models.trainees import Trainee
 
 
 class AuthRepository:
@@ -29,40 +30,34 @@ class AuthRepository:
     # ── Lookup helpers ──────────────────────────────────────────────
 
     async def get_itadmin_by_email(self, email: str) -> ITAdmin | None:
-        result = await self.db.execute(
-            select(ITAdmin).where(ITAdmin.email == email)
-        )
-        return result.scalars().first()
+        result = await self.db.execute(select(ITAdmin).where(ITAdmin.email == email))
+        return cast(ITAdmin | None, result.scalars().first())
 
     async def get_mentor_by_email(self, email: str) -> Mentor | None:
-        result = await self.db.execute(
-            select(Mentor).where(Mentor.email == email)
-        )
-        return result.scalars().first()
+        result = await self.db.execute(select(Mentor).where(Mentor.email == email))
+        return cast(Mentor | None, result.scalars().first())
 
     async def get_trainee_by_email(self, email: str) -> Trainee | None:
-        result = await self.db.execute(
-            select(Trainee).where(Trainee.email == email)
-        )
-        return result.scalars().first()
+        result = await self.db.execute(select(Trainee).where(Trainee.email == email))
+        return cast(Trainee | None, result.scalars().first())
 
     async def get_itadmin_by_id(self, itadmin_id: UUID) -> ITAdmin | None:
         result = await self.db.execute(
             select(ITAdmin).where(ITAdmin.it_admin_id == itadmin_id)
         )
-        return result.scalars().first()
+        return cast(ITAdmin | None, result.scalars().first())
 
     async def get_mentor_by_id(self, mentor_id: UUID) -> Mentor | None:
         result = await self.db.execute(
             select(Mentor).where(Mentor.mentor_id == mentor_id)
         )
-        return result.scalars().first()
+        return cast(Mentor | None, result.scalars().first())
 
     async def get_trainee_by_id(self, trainee_id: UUID) -> Trainee | None:
         result = await self.db.execute(
             select(Trainee).where(Trainee.trainee_id == trainee_id)
         )
-        return result.scalars().first()
+        return cast(Trainee | None, result.scalars().first())
 
     # ── Refresh token blocklist (for logout / revocation) ───────────
     # Store revoked JTIs in a simple table: revokedtokens(jti, revoked_at)

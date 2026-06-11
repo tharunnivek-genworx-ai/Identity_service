@@ -1,7 +1,7 @@
 import uuid
 
-from sqlalchemy import Column, String, Boolean, Text, ForeignKey, Index
-from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
+from sqlalchemy import Boolean, Column, ForeignKey, Index, String, Text
+from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
 from sqlalchemy.orm import relationship
 
 from src.api.data.clients.postgres.database import Base
@@ -11,7 +11,9 @@ from src.api.utils.time import utc_now
 class SpaceAnnouncement(Base):
     __tablename__ = "spaceannouncements"
 
-    announcement_id = Column("announcementid", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    announcement_id = Column(
+        "announcementid", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
 
     space_id = Column(
         "spaceid",
@@ -27,12 +29,20 @@ class SpaceAnnouncement(Base):
     )
 
     title = Column(String(300), nullable=False)
-    body = Column(Text, nullable=False)     # supports Markdown
+    body = Column(Text, nullable=False)  # supports Markdown
     # 'space_published', 'tree_updated', 'general'
     event_type = Column("eventtype", String(50), nullable=False)
 
-    created_at = Column("createdat", TIMESTAMP(timezone=True), nullable=False, default=utc_now)
-    updated_at = Column("updatedat", TIMESTAMP(timezone=True), nullable=False, default=utc_now, onupdate=utc_now)
+    created_at = Column(
+        "createdat", TIMESTAMP(timezone=True), nullable=False, default=utc_now
+    )
+    updated_at = Column(
+        "updatedat",
+        TIMESTAMP(timezone=True),
+        nullable=False,
+        default=utc_now,
+        onupdate=utc_now,
+    )
     # Soft delete / retract by mentor
     is_active = Column("isactive", Boolean, nullable=False, default=True)
 

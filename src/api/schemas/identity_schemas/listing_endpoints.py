@@ -1,13 +1,8 @@
-from typing import Generic, List, TypeVar
-
 from pydantic import BaseModel, Field
 
 from src.api.schemas.identity_schemas.departments_schema import DepartmentOut
 from src.api.schemas.identity_schemas.mentors_schema import MentorOut
 from src.api.schemas.identity_schemas.trainees_schema import TraineeOut
-
-# Generic type variable for the paginated item type
-T = TypeVar("T")
 
 
 class PageParams(BaseModel):
@@ -17,11 +12,12 @@ class PageParams(BaseModel):
 
     Example request: GET /admin/mentors?page=2&limit=20
     """
+
     page: int = Field(default=1, ge=1, description="Page number, 1-indexed")
     limit: int = Field(default=20, ge=1, le=100, description="Items per page, max 100")
 
 
-class PaginatedResponse(BaseModel, Generic[T]):
+class PaginatedResponse[T](BaseModel):
     """
     Generic paginated wrapper. Wrap any Out schema:
         PaginatedResponse[MentorOut]
@@ -29,12 +25,13 @@ class PaginatedResponse(BaseModel, Generic[T]):
 
     Fields:
         items  — The current page of results.
-        total  — Total number of records matching the query (for frontend pagination UI).
+        total  — Total records matching the query (for frontend pagination UI).
         page   — Current page number.
         limit  — Page size used for this response.
         pages  — Total number of pages (ceil(total / limit)).
     """
-    items: List[T]
+
+    items: list[T]
     total: int
     page: int
     limit: int
@@ -43,16 +40,20 @@ class PaginatedResponse(BaseModel, Generic[T]):
 
 # ---------- Typed list responses for each domain entity ----------
 
+
 class DepartmentListResponse(PaginatedResponse[DepartmentOut]):
     """Paginated list of departments. Used by GET /admin/departments."""
+
     pass
 
 
 class MentorListResponse(PaginatedResponse[MentorOut]):
     """Paginated list of mentors. Used by GET /admin/mentors."""
+
     pass
 
 
 class TraineeListResponse(PaginatedResponse[TraineeOut]):
     """Paginated list of trainees. Used by GET /admin/trainees."""
+
     pass

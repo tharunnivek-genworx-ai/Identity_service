@@ -1,11 +1,9 @@
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
-from alembic import context
+from sqlalchemy import engine_from_config, pool
 
 import src.api.data.models.postgres  # noqa: F401 — registers all models onto Base.metadata
+from alembic import context
 from src.api.data.clients.postgres.database import Base, build_database_url
 
 # this is the Alembic Config object, which provides

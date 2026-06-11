@@ -22,36 +22,38 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.data.repositories.space_node_repository.space_repository import SpaceRepository
-from src.api.schemas.space_node_schemas.space_schema import (
-    SpaceCreateRequest,
-    SpaceUpdateRequest,
-    SpacePublishRequest,
-    SpaceTransferOwnershipRequest,
-    SpaceAddTraineesRequest,
-    SpaceRemoveTraineeRequest,
-    SpaceJoinRequest,
-    SpaceResponse,
-    SpaceListResponse,
-    SpaceJoinResponse,
-    SpaceMemberSummary,
-    PageParams,
-)
 from src.api.core.exceptions.space_node_exceptions.space_exceptions import (
-    SpaceNotFoundException,
-    SpaceForbiddenException,
-    SpaceNotPublishedException,
-    SpaceAlreadyPublishedException,
+    CannotTransferToSameMentorException,
+    DepartmentNotFoundException,
     InvalidInviteCodeException,
     InviteCodeGenerationFailedException,
-    TraineeNotMemberException,
+    SpaceAlreadyPublishedException,
+    SpaceForbiddenException,
+    SpaceNotFoundException,
+    SpaceNotPublishedException,
     TraineeAlreadyJoinedViaInviteException,
+    TraineeNotMemberException,
     TraineeRemovedFromSpaceException,
-    DepartmentNotFoundException,
     TransferTargetNotFoundException,
-    CannotTransferToSameMentorException,
 )
-from src.api.utils.invite_code import _generate_invite_code, _INVITE_CODE_MAX_ATTEMPTS
+from src.api.data.repositories.space_node_repository.space_repository import (
+    SpaceRepository,
+)
+from src.api.schemas.space_node_schemas.space_schema import (
+    PageParams,
+    SpaceAddTraineesRequest,
+    SpaceCreateRequest,
+    SpaceJoinRequest,
+    SpaceJoinResponse,
+    SpaceListResponse,
+    SpaceMemberSummary,
+    SpacePublishRequest,
+    SpaceRemoveTraineeRequest,
+    SpaceResponse,
+    SpaceTransferOwnershipRequest,
+    SpaceUpdateRequest,
+)
+from src.api.utils.invite_code import _INVITE_CODE_MAX_ATTEMPTS, _generate_invite_code
 from src.api.utils.space_node_utils.build_space_response import _build_space_response
 from src.api.utils.space_node_utils.space_role_assert import (
     _assert_effective_owner,
@@ -64,7 +66,6 @@ from src.api.utils.space_node_utils.space_role_assert import (
 
 
 class SpaceService:
-
     def __init__(self, session: AsyncSession):
         self.session = session
 
@@ -133,7 +134,9 @@ class SpaceService:
 
     # ── get ────────────────────────────────────────────────────────────
 
-    async def get_space(self, space_id: UUID, user_id: UUID, role: str) -> SpaceResponse:
+    async def get_space(
+        self, space_id: UUID, user_id: UUID, role: str
+    ) -> SpaceResponse:
         """Fetch single space with ownership / membership guard."""
         repo = SpaceRepository(self.session)
 
@@ -220,7 +223,9 @@ class SpaceService:
         if target is None or not target.is_active:
             raise TransferTargetNotFoundException()
 
-        space = await repo.set_transferred_mentor(space, request.transferred_to_mentor_id)
+        space = await repo.set_transferred_mentor(
+            space, request.transferred_to_mentor_id
+        )
         return _build_space_response(space)
 
     # ── add trainees ───────────────────────────────────────────────────
@@ -281,7 +286,11 @@ class SpaceService:
     # ── remove trainee ─────────────────────────────────────────────────
 
     async def remove_trainee(
-        self, space_id: UUID, request: SpaceRemoveTraineeRequest, user_id: UUID, role: str
+        self,
+        space_id: UUID,
+        request: SpaceRemoveTraineeRequest,
+        user_id: UUID,
+        role: str,
     ) -> dict:
         """Mentor soft-removes one trainee. Historical data is preserved."""
         _assert_mentor(role)

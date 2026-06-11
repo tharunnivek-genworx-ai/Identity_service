@@ -1,8 +1,9 @@
+from src.api.data.models.postgres.e_spaces_trees.espaces import ESpace
 from src.api.schemas.space_node_schemas.space_schema import SpaceResponse
 from src.api.utils.space_node_utils.space_role_assert import _resolve_effective_mentor
 
 
-def _build_space_response(space) -> SpaceResponse:
+def _build_space_response(space: ESpace) -> SpaceResponse:
     return SpaceResponse(
         space_id=space.space_id,
         space_name=space.space_name,

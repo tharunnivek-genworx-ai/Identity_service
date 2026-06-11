@@ -1,7 +1,7 @@
 import uuid
 
-from sqlalchemy import Column, String, Boolean, Text, Integer, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
 from sqlalchemy.orm import relationship
 
 from src.api.data.clients.postgres.database import Base
@@ -32,7 +32,9 @@ class StudyMaterialVersion(Base):
 
     # 'generate', 'regenerate', 'improve', 'manual_edit'
     generationtype = Column(String(20), nullable=False)
-    mentorfeedbackused = Column(Text, nullable=True)  # stored when generationtype = 'improve'
+    mentorfeedbackused = Column(
+        Text, nullable=True
+    )  # stored when generationtype = 'improve'
 
     # Immutable audit anchor — set at creation, never updated (EC-17)
     referencematerialid = Column(
@@ -47,8 +49,8 @@ class StudyMaterialVersion(Base):
         nullable=True,
     )
 
-    llmmodelused = Column(String(100), nullable=True)   # e.g. llama-3.3-70b
-    promptsnapshot = Column(Text, nullable=True)        # full prompt for audit/debug
+    llmmodelused = Column(String(100), nullable=True)  # e.g. llama-3.3-70b
+    promptsnapshot = Column(Text, nullable=True)  # full prompt for audit/debug
     tokenusage = Column(Integer, nullable=True)
 
     # Only one version per node has isactive = TRUE at a time (enforced at app layer)
@@ -71,8 +73,14 @@ class StudyMaterialVersion(Base):
 
     node = relationship("TopicNode", foreign_keys=[nodeid])
     space = relationship("ESpace", foreign_keys=[spaceid])
-    reference_material = relationship("ReferenceMaterial", back_populates="study_material_versions")
-    based_on_version = relationship("StudyMaterialVersion", remote_side="StudyMaterialVersion.versionid", foreign_keys=[basedonversionid])
+    reference_material = relationship(
+        "ReferenceMaterial", back_populates="study_material_versions"
+    )
+    based_on_version = relationship(
+        "StudyMaterialVersion",
+        remote_side="StudyMaterialVersion.versionid",
+        foreign_keys=[basedonversionid],
+    )
     published_by_mentor = relationship("Mentor", foreign_keys=[publishedby])
     created_by_mentor = relationship("Mentor", foreign_keys=[createdby])
     quizzes = relationship("Quiz", back_populates="study_material_version")

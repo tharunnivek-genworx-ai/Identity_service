@@ -1,7 +1,9 @@
 """Async SQLAlchemy engine and session utilities for the auth backend."""
 
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from collections.abc import AsyncGenerator
+
 from sqlalchemy.engine import URL
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 from src.api.config import dbconfig
@@ -46,7 +48,7 @@ SessionLocal = sessionmaker(
 )
 
 
-async def get_db():
+async def get_db() -> AsyncGenerator[AsyncSession]:
     """Yield a database session and roll back on unhandled errors."""
     async with SessionLocal() as session:
         try:

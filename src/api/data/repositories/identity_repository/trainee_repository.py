@@ -2,16 +2,17 @@
 """Repository for trainee CRUD and lifecycle operations.
 Mirrors mentor_repository structure — same flush-commit-refresh pattern."""
 
+from datetime import UTC, date, datetime
+from typing import cast
 from uuid import UUID
-from datetime import datetime, timezone, date
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 
 from src.api.data.models.postgres.Identity_models.trainees import Trainee
 
 
 class TraineeRepository:
-
     def __init__(self, session: AsyncSession):
         self.db = session
 
@@ -19,24 +20,22 @@ class TraineeRepository:
         result = await self.db.execute(
             select(Trainee).where(Trainee.trainee_id == trainee_id)
         )
-        return result.scalars().first()
+        return cast(Trainee | None, result.scalars().first())
 
     async def get_by_email(self, email: str) -> Trainee | None:
-        result = await self.db.execute(
-            select(Trainee).where(Trainee.email == email)
-        )
-        return result.scalars().first()
+        result = await self.db.execute(select(Trainee).where(Trainee.email == email))
+        return cast(Trainee | None, result.scalars().first())
 
     async def get_by_employee_id(self, employee_id: str) -> Trainee | None:
         result = await self.db.execute(
             select(Trainee).where(Trainee.employee_id == employee_id)
         )
-        return result.scalars().first()
+        return cast(Trainee | None, result.scalars().first())
 
-    async def get_all(self, skip: int = 0, limit: int = 20) -> tuple[list[Trainee], int]:
-        count_result = await self.db.execute(
-            select(func.count()).select_from(Trainee)
-        )
+    async def get_all(
+        self, skip: int = 0, limit: int = 20
+    ) -> tuple[list[Trainee], int]:
+        count_result = await self.db.execute(select(func.count()).select_from(Trainee))
         total = count_result.scalar_one()
 
         result = await self.db.execute(
@@ -83,7 +82,7 @@ class TraineeRepository:
     async def update(self, trainee: Trainee, updates: dict) -> Trainee:
         for field, value in updates.items():
             setattr(trainee, field, value)
-        trainee.updated_at = datetime.now(timezone.utc)
+        trainee.updated_at = datetime.now(UTC)
         await self.db.commit()
         await self.db.refresh(trainee)
         return trainee
@@ -91,8 +90,8 @@ class TraineeRepository:
     async def deactivate(self, trainee: Trainee) -> Trainee:
         """Soft-delete: set is_active=False and stamp deleted_at (EC-28)."""
         trainee.is_active = False
-        trainee.deleted_at = datetime.now(timezone.utc)
-        trainee.updated_at = datetime.now(timezone.utc)
+        trainee.deleted_at = datetime.now(UTC)
+        trainee.updated_at = datetime.now(UTC)
         await self.db.commit()
         await self.db.refresh(trainee)
         return trainee
@@ -101,7 +100,7 @@ class TraineeRepository:
         """Reverse soft-delete: clear deleted_at, set is_active=True (EC-29)."""
         trainee.is_active = True
         trainee.deleted_at = None
-        trainee.updated_at = datetime.now(timezone.utc)
+        trainee.updated_at = datetime.now(UTC)
         await self.db.commit()
         await self.db.refresh(trainee)
         return trainee
@@ -112,9 +111,9 @@ class TraineeRepository:
         result = await self.db.execute(
             select(Trainee)
             .where(
-                (Trainee.full_name.ilike(search_term)) |
-                (Trainee.email.ilike(search_term)) |
-                (Trainee.employee_id.ilike(search_term))
+                (Trainee.full_name.ilike(search_term))
+                | (Trainee.email.ilike(search_term))
+                | (Trainee.employee_id.ilike(search_term))
             )
             .limit(limit)
         )

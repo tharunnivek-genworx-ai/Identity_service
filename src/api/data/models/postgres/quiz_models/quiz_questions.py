@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, String, Boolean, Text, Integer, ForeignKey
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -10,7 +10,9 @@ from src.api.data.clients.postgres.database import Base
 class QuizQuestion(Base):
     __tablename__ = "quizquestions"
 
-    question_id = Column("questionid", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    question_id = Column(
+        "questionid", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
 
     quiz_id = Column(
         "quizid",

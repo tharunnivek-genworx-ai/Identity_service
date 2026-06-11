@@ -8,8 +8,13 @@ from src.api.core.exceptions.space_node_exceptions.node_exceptions import (
 from src.api.core.exceptions.space_node_exceptions.space_exceptions import (
     SpaceNotFoundException,
 )
-from src.api.data.repositories.space_node_repository.node_repository import NodeRepository
-from src.api.data.repositories.space_node_repository.space_repository import SpaceRepository
+from src.api.data.models.postgres.e_spaces_trees.espaces import ESpace
+from src.api.data.repositories.space_node_repository.node_repository import (
+    NodeRepository,
+)
+from src.api.data.repositories.space_node_repository.space_repository import (
+    SpaceRepository,
+)
 from src.api.utils.space_node_utils.space_role_assert import (
     _resolve_effective_mentor,
 )
@@ -23,7 +28,7 @@ def _assert_mentor(role: str) -> None:
 
 async def _get_space_and_assert_owner(
     session: AsyncSession, space_id: UUID, mentor_id: UUID
-):
+) -> ESpace:
     """Fetch space, assert it exists and caller is effective owner."""
     space_repo = SpaceRepository(session)
     space = await space_repo.get_space_by_id(space_id)
