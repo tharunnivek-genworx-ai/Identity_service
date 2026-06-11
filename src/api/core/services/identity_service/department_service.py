@@ -37,19 +37,19 @@ class DepartmentService:
         repo = DepartmentRepository(self.session)
 
         # Guard: department code must be unique (business key)
-        if await repo.get_by_code(payload.departmentcode):
-            raise DepartmentCodeAlreadyExistsException(payload.departmentcode)
+        if await repo.get_by_code(payload.department_code):
+            raise DepartmentCodeAlreadyExistsException(payload.department_code)
 
         # Guard: department name must be unique (UX sanity check)
-        if await repo.get_by_name(payload.departmentname):
-            raise DepartmentNameAlreadyExistsException(payload.departmentname)
+        if await repo.get_by_name(payload.department_name):
+            raise DepartmentNameAlreadyExistsException(payload.department_name)
 
         dept = await repo.create(
-            departmentname=payload.departmentname,
-            departmentcode=payload.departmentcode.upper(),  # normalize to uppercase
+            department_name=payload.department_name,
+            department_code=payload.department_code.upper(),  # normalize to uppercase
             description=payload.description,
-            isactive=payload.isactive,
-            createdby=created_by,
+            is_active=payload.is_active,
+            created_by=created_by,
         )
         return DepartmentOut.model_validate(dept)
 
@@ -87,13 +87,13 @@ class DepartmentService:
         updates = payload.model_dump(exclude_unset=True)
 
         # Guard: if name is changing, ensure uniqueness
-        if "departmentname" in updates:
-            existing = await repo.get_by_name(updates["departmentname"])
-            if existing and existing.departmentid != department_id:
-                raise DepartmentNameAlreadyExistsException(updates["departmentname"])
+        if "department_name" in updates:
+            existing = await repo.get_by_name(updates["department_name"])
+            if existing and existing.department_id != department_id:
+                raise DepartmentNameAlreadyExistsException(updates["department_name"])
 
         # Guard: if deactivating, ensure no active members remain
-        if updates.get("isactive") is False:
+        if updates.get("is_active") is False:
             if await repo.has_active_members(department_id):
                 raise DepartmentHasActiveMembersException()
 

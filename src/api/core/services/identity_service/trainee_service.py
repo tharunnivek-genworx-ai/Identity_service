@@ -43,32 +43,32 @@ class TraineeService:
         dept_repo = DepartmentRepository(self.session)
 
         # Guard: department must exist
-        dept = await dept_repo.get_by_id(payload.departmentid)
+        dept = await dept_repo.get_by_id(payload.department_id)
         if not dept:
-            raise DepartmentNotFoundException(str(payload.departmentid))
+            raise DepartmentNotFoundException(str(payload.department_id))
 
         # Guard: email unique across trainee table
         if await repo.get_by_email(payload.email):
             raise TraineeEmailAlreadyExistsException(payload.email)
 
         # Guard: employeeid unique if provided
-        if payload.employeeid and await repo.get_by_employee_id(payload.employeeid):
-            raise TraineeEmployeeIdAlreadyExistsException(payload.employeeid)
+        if payload.employee_id and await repo.get_by_employee_id(payload.employee_id):
+            raise TraineeEmployeeIdAlreadyExistsException(payload.employee_id)
 
-        passwordhash = hash_password(payload.password)
+        password_hash = hash_password(payload.password)
 
         trainee = await repo.create(
             email=payload.email,
-            passwordhash=passwordhash,
-            fullname=payload.fullname,
-            departmentid=payload.departmentid,
-            createdby=created_by,
-            employeeid=payload.employeeid,
+            password_hash=password_hash,
+            full_name=payload.full_name,
+            department_id=payload.department_id,
+            created_by=created_by,
+            employee_id=payload.employee_id,
             dob=payload.dob,
             phone=payload.phone,
-            profilepictureurl=payload.profilepictureurl,
-            joiningdate=payload.joiningdate,
-            isactive=payload.isactive,
+            profile_picture_url=payload.profile_picture_url,
+            joining_date=payload.joining_date,
+            is_active=payload.is_active,
         )
         return TraineeOut.model_validate(trainee)
 
@@ -105,7 +105,7 @@ class TraineeService:
         if not trainee:
             raise TraineeNotFoundException(str(trainee_id))
 
-        if not trainee.isactive:
+        if not trainee.is_active:
             raise TraineeAlreadyDeactivatedException()
 
         trainee = await repo.deactivate(trainee)
@@ -123,8 +123,14 @@ class TraineeService:
         if not trainee:
             raise TraineeNotFoundException(str(trainee_id))
 
-        if trainee.isactive:
+        if trainee.is_active:
             raise TraineeAlreadyActiveException()
 
         trainee = await repo.reactivate(trainee)
         return TraineeOut.model_validate(trainee)
+
+    async def search_trainees(self, query: str, limit: int = 20) -> list[TraineeOut]:
+        """Search trainees by name, email, or employee ID for mentor assignment."""
+        repo = TraineeRepository(self.session)
+        trainees = await repo.search_trainees(query, limit)
+        return [TraineeOut.model_validate(t) for t in trainees]

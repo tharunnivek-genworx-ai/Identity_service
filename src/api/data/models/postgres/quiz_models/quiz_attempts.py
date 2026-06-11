@@ -11,25 +11,29 @@ from src.api.utils.time import utc_now
 class QuizAttempt(Base):
     __tablename__ = "quizattempts"
 
-    attemptid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    attempt_id = Column("attemptid", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
-    quizid = Column(
+    quiz_id = Column(
+        "quizid",
         UUID(as_uuid=True),
         ForeignKey("quizzes.quizid", ondelete="RESTRICT"),
         nullable=False,
     )
-    traineeid = Column(
+    trainee_id = Column(
+        "traineeid",
         UUID(as_uuid=True),
         ForeignKey("trainees.traineeid", ondelete="RESTRICT"),
         nullable=False,
     )
     # Denormalized
-    spaceid = Column(
+    space_id = Column(
+        "spaceid",
         UUID(as_uuid=True),
         ForeignKey("espaces.spaceid", ondelete="RESTRICT"),
         nullable=False,
     )
-    nodeid = Column(
+    node_id = Column(
+        "nodeid",
         UUID(as_uuid=True),
         ForeignKey("topicnodes.nodeid", ondelete="RESTRICT"),
         nullable=False,
@@ -40,15 +44,15 @@ class QuizAttempt(Base):
     status = Column(String(20), nullable=False, default="in_progress")
 
     score = Column(Float, nullable=True)            # calculated on submit
-    totalcorrect = Column(Integer, nullable=True)
-    totalwithhints = Column(Integer, nullable=True) # correct answers that needed hints
-    totalskipped = Column(Integer, nullable=True)
+    total_correct = Column("totalcorrect", Integer, nullable=True)
+    total_with_hints = Column("totalwithhints", Integer, nullable=True) # correct answers that needed hints
+    total_skipped = Column("totalskipped", Integer, nullable=True)
 
-    startedat = Column(TIMESTAMP(timezone=True), nullable=False, default=utc_now)
-    submittedat = Column(TIMESTAMP(timezone=True), nullable=True)
+    started_at = Column("startedat", TIMESTAMP(timezone=True), nullable=False, default=utc_now)
+    submitted_at = Column("submittedat", TIMESTAMP(timezone=True), nullable=True)
 
     quiz = relationship("Quiz", back_populates="attempts")
-    trainee = relationship("Trainee", foreign_keys=[traineeid])
-    space = relationship("ESpace", foreign_keys=[spaceid])
-    node = relationship("TopicNode", foreign_keys=[nodeid])
+    trainee = relationship("Trainee", foreign_keys=[trainee_id])
+    space = relationship("ESpace", foreign_keys=[space_id])
+    node = relationship("TopicNode", foreign_keys=[node_id])
     responses = relationship("QuizQuestionResponse", back_populates="attempt")

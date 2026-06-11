@@ -44,33 +44,33 @@ class MentorService:
         dept_repo = DepartmentRepository(self.session)
 
         # Guard: department must exist
-        dept = await dept_repo.get_by_id(payload.departmentid)
+        dept = await dept_repo.get_by_id(payload.department_id)
         if not dept:
-            raise DepartmentNotFoundException(str(payload.departmentid))
+            raise DepartmentNotFoundException(str(payload.department_id))
 
         # Guard: email unique across mentor table
         if await repo.get_by_email(payload.email):
             raise MentorEmailAlreadyExistsException(payload.email)
 
         # Guard: employeeid unique if provided
-        if payload.employeeid and await repo.get_by_employee_id(payload.employeeid):
-            raise MentorEmployeeIdAlreadyExistsException(payload.employeeid)
+        if payload.employee_id and await repo.get_by_employee_id(payload.employee_id):
+            raise MentorEmployeeIdAlreadyExistsException(payload.employee_id)
 
-        passwordhash = hash_password(payload.password)
+        password_hash = hash_password(payload.password)
 
         mentor = await repo.create(
             email=payload.email,
-            passwordhash=passwordhash,
-            fullname=payload.fullname,
+            password_hash=password_hash,
+            full_name=payload.full_name,
             designation=payload.designation,
-            departmentid=payload.departmentid,
-            createdby=created_by,
-            employeeid=payload.employeeid,
+            department_id=payload.department_id,
+            created_by=created_by,
+            employee_id=payload.employee_id,
             phone=payload.phone,
-            profilepictureurl=payload.profilepictureurl,
-            isactive=payload.isactive,
+            profile_picture_url=payload.profile_picture_url,
+            is_active=payload.is_active,
         )
-        return MentorOut.model_validate(mentor) #maps that ORM object into the response schema and enforces types again (UUIDs, timestamps, etc.).
+        return MentorOut.model_validate(mentor)
 
     async def list_mentors(self, params: PageParams) -> MentorListResponse:
         repo = MentorRepository(self.session)
@@ -111,13 +111,13 @@ class MentorService:
         if not mentor:
             raise MentorNotFoundException(str(mentor_id))
 
-        if not mentor.isactive:
+        if not mentor.is_active:
             raise MentorAlreadyDeactivatedException()
 
         # EC-27: validate transfer target if provided
         if payload.transferred_to_mentor_id:
             target = await repo.get_by_id(payload.transferred_to_mentor_id)
-            if not target or not target.isactive:
+            if not target or not target.is_active:
                 raise TransferTargetNotFoundException(str(payload.transferred_to_mentor_id))
 
         mentor = await repo.deactivate(mentor)
@@ -135,7 +135,7 @@ class MentorService:
         if not mentor:
             raise MentorNotFoundException(str(mentor_id))
 
-        if mentor.isactive:
+        if mentor.is_active:
             raise MentorAlreadyActiveException()
 
         mentor = await repo.reactivate(mentor)

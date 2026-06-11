@@ -23,7 +23,7 @@ from src.api.data.models.postgres.e_spaces_trees import (  # noqa: F401
 )
 
 # ── Study material ────────────────────────────────────────────────────────────
-from src.api.data.models.postgres.study_material_tables import (  # noqa: F401
+from src.api.data.models.postgres.study_material_models import (  # noqa: F401
     study_material_versions,
     reference_materials,
     node_media,
@@ -32,7 +32,7 @@ from src.api.data.models.postgres.study_material_tables import (  # noqa: F401
 )
 
 # ── Quizzes ───────────────────────────────────────────────────────────────────
-from src.api.data.models.postgres.quiz_tables import (  # noqa: F401
+from src.api.data.models.postgres.quiz_models import (  # noqa: F401
     quizzes,
     quiz_questions,
     quiz_attempts,
@@ -49,7 +49,7 @@ from src.api.data.models.postgres.progress_notification_models import (  # noqa:
 )
 
 # ── Student chat ──────────────────────────────────────────────────────────────
-from src.api.data.models.postgres.student_chat import (  # noqa: F401
+from src.api.data.models.postgres.student_chat_models import (  # noqa: F401
     chat_sessions,
     chat_messages,
 )

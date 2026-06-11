@@ -48,19 +48,19 @@ class AuthRepository:
 
     async def get_itadmin_by_id(self, itadmin_id: UUID) -> ITAdmin | None:
         result = await self.db.execute(
-            select(ITAdmin).where(ITAdmin.itadminid == itadmin_id)
+            select(ITAdmin).where(ITAdmin.it_admin_id == itadmin_id)
         )
         return result.scalars().first()
 
     async def get_mentor_by_id(self, mentor_id: UUID) -> Mentor | None:
         result = await self.db.execute(
-            select(Mentor).where(Mentor.mentorid == mentor_id)
+            select(Mentor).where(Mentor.mentor_id == mentor_id)
         )
         return result.scalars().first()
 
     async def get_trainee_by_id(self, trainee_id: UUID) -> Trainee | None:
         result = await self.db.execute(
-            select(Trainee).where(Trainee.traineeid == trainee_id)
+            select(Trainee).where(Trainee.trainee_id == trainee_id)
         )
         return result.scalars().first()
 
