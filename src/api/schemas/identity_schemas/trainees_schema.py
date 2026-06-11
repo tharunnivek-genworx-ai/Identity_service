@@ -8,15 +8,17 @@ from .common_schema import Timestamped
 
 
 class TraineeBase(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     email: EmailStr
-    fullname: str = Field(..., max_length=150)
-    departmentid: UUID
-    employeeid: Optional[str] = Field(None, max_length=50)
+    full_name: str = Field(..., max_length=150, alias="fullname")
+    department_id: UUID = Field(..., alias="departmentid")
+    employee_id: Optional[str] = Field(None, max_length=50, alias="employeeid")
     dob: Optional[date] = None
     phone: Optional[str] = Field(None, max_length=20)
-    profilepictureurl: Optional[str] = None
-    joiningdate: Optional[date] = None
-    isactive: bool = True
+    profile_picture_url: Optional[str] = Field(None, alias="profilepictureurl")
+    joining_date: Optional[date] = Field(None, alias="joiningdate")
+    is_active: bool = Field(True, alias="isactive")
 
 
 class TraineeCreate(TraineeBase):
@@ -32,11 +34,11 @@ class TraineeOut(TraineeBase, Timestamped):
     Response schema for trainee data. passwordhash intentionally excluded.
     deletedat included so admin UI can display soft-deleted state.
     """
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
-    traineeid: UUID
-    createdby: UUID
-    deletedat: Optional[datetime] = None
+    trainee_id: UUID = Field(..., alias="traineeid")
+    created_by: UUID = Field(..., alias="createdby")
+    deleted_at: Optional[datetime] = Field(None, alias="deletedat")
 
 
 class TraineeDeactivateRequest(BaseModel):
@@ -44,7 +46,9 @@ class TraineeDeactivateRequest(BaseModel):
     Payload for PATCH /admin/trainees/:id/deactivate.
     Sets is_active = False and stamps deleted_at at the service layer (EC-28).
     """
-    isactive: bool = False
+    model_config = ConfigDict(populate_by_name=True)
+
+    is_active: bool = Field(False, alias="isactive")
 
 
 class TraineeReactivateRequest(BaseModel):
@@ -52,4 +56,6 @@ class TraineeReactivateRequest(BaseModel):
     Payload for PATCH /admin/trainees/:id/reactivate.
     Sets is_active = True and clears deleted_at at the service layer (EC-29).
     """
-    isactive: bool = True
+    model_config = ConfigDict(populate_by_name=True)
+
+    is_active: bool = Field(True, alias="isactive")

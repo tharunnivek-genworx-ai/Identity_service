@@ -8,14 +8,16 @@ from .common_schema import Timestamped
 
 
 class MentorBase(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     email: EmailStr
-    fullname: str = Field(..., max_length=150)
+    full_name: str = Field(..., max_length=150, alias="fullname")
     designation: str = Field(..., max_length=100)
-    departmentid: UUID
-    employeeid: Optional[str] = Field(None, max_length=50)
+    department_id: UUID = Field(..., alias="departmentid")
+    employee_id: Optional[str] = Field(None, max_length=50, alias="employeeid")
     phone: Optional[str] = Field(None, max_length=20)
-    profilepictureurl: Optional[str] = None
-    isactive: bool = True
+    profile_picture_url: Optional[str] = Field(None, alias="profilepictureurl")
+    is_active: bool = Field(True, alias="isactive")
 
 
 class MentorCreate(MentorBase):
@@ -31,11 +33,13 @@ class MentorOut(MentorBase, Timestamped):
     Response schema for mentor data. passwordhash is intentionally excluded.
     deletedat is included so the admin UI can show soft-deleted state.
     """
-    model_config = ConfigDict(from_attributes=True) # tells Pydantic that this model is allowed to be built from any object’s attributes, not just from plain dicts.
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
-    mentorid: UUID
-    createdby: UUID
-    deletedat: Optional[datetime] = None
+    mentor_id: UUID = Field(..., alias="mentorid")
+    created_by: UUID = Field(..., alias="createdby")
+    deleted_at: Optional[datetime] = Field(None, alias="deletedat")
+    department_name: Optional[str] = None
+    department_code: Optional[str] = None
 
 
 class MentorDeactivateRequest(BaseModel):
@@ -48,7 +52,9 @@ class MentorDeactivateRequest(BaseModel):
     If omitted, spaces remain under the original mentor_id (accessible to trainees
     but effectively owner-less until transferred).
     """
-    isactive: bool = False
+    model_config = ConfigDict(populate_by_name=True)
+
+    is_active: bool = Field(False, alias="isactive")
     transferred_to_mentor_id: Optional[UUID] = None
 
 
@@ -57,4 +63,6 @@ class MentorReactivateRequest(BaseModel):
     Payload for reactivating a soft-deleted mentor account (EC-29).
     Sets is_active = True and clears deleted_at at the service layer.
     """
-    isactive: bool = True
+    model_config = ConfigDict(populate_by_name=True)
+
+    is_active: bool = Field(True, alias="isactive")
