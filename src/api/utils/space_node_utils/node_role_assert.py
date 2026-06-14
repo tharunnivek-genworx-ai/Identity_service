@@ -59,19 +59,6 @@ async def _assert_space_access(
         raise NodeForbiddenException()
 
 
-async def _get_ancestor_ids(node_id: UUID, repo: NodeRepository) -> set[UUID]:
-    """Walk up the tree collecting all ancestor node_ids."""
-    ancestors: set[UUID] = set()
-    current_id = node_id
-    while current_id is not None:
-        node = await repo.get_node_by_id(current_id)
-        if node is None:
-            break
-        ancestors.add(node.node_id)
-        current_id = node.parent_id
-    return ancestors
-
-
 async def _get_descendant_ids(node_id: UUID, repo: NodeRepository) -> list[UUID]:
     """Collect node_id of all descendants recursively."""
     result: list[UUID] = []

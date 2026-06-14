@@ -34,6 +34,7 @@ from src.api.core.exceptions.space_node_exceptions.node_exceptions import (
     NodeReorderIncompleteException,
     NodeReorderSiblingMismatchException,
 )
+from src.api.data.models.postgres.e_spaces_trees.topic_nodes import TopicNode
 from src.api.data.repositories.space_node_repository.node_repository import (
     UNSET,
     NodeRepository,
@@ -49,6 +50,9 @@ from src.api.schemas.space_node_schemas.node_schema import (
     NodeUpdateInstructionRequest,
 )
 from src.api.utils.space_node_utils.build_node import _build_node_response, _build_tree
+from src.api.utils.space_node_utils.instruction_mode import (
+    resolve_instruction_fields_from_mode,
+)
 from src.api.utils.space_node_utils.node_role_assert import (
     _assert_mentor,
     _assert_space_access,
@@ -60,6 +64,14 @@ from src.api.utils.space_node_utils.node_role_assert import (
 class NodeService:
     def __init__(self, session: AsyncSession):
         self.session = session
+
+    async def _build_node_response_with_effective_instruction(
+        self,
+        repo: NodeRepository,
+        node: TopicNode,
+    ) -> NodeResponse:
+        ancestors = await repo.get_ancestors(node)
+        return _build_node_response(node, ancestors)
 
     # ── create ─────────────────────────────────────────────────────────
 
@@ -98,7 +110,7 @@ class NodeService:
             node_additive_instruction=request.node_additive_instruction,
             created_by=user_id,
         )
-        return _build_node_response(node)
+        return await self._build_node_response_with_effective_instruction(repo, node)
 
     # ── get tree ───────────────────────────────────────────────────────
 
@@ -128,7 +140,7 @@ class NodeService:
             raise NodeNotFoundException()
 
         await _assert_space_access(self.session, node.space_id, user_id, role)
-        return _build_node_response(node)
+        return await self._build_node_response_with_effective_instruction(repo, node)
 
     # ── rename ─────────────────────────────────────────────────────────
 
@@ -149,7 +161,7 @@ class NodeService:
             raise NodeArchivedModificationException()
 
         node = await repo.update_node_title(node, request.title)
-        return _build_node_response(node)
+        return await self._build_node_response_with_effective_instruction(repo, node)
 
     # ── update instruction ─────────────────────────────────────────────
 
@@ -187,20 +199,30 @@ class NodeService:
         if not node.is_active:
             raise NodeArchivedModificationException()
 
-        # Determine whether node_additive_instruction was explicitly provided
-        additive = (
-            request.node_additive_instruction
-            if "node_additive_instruction" in request.model_fields_set
-            else UNSET
-        )
+        if "instruction_mode" in request.model_fields_set and request.instruction_mode:
+            node_specific, additive, tree_default = (
+                resolve_instruction_fields_from_mode(
+                    instruction_mode=request.instruction_mode,
+                    instruction_text=request.instruction_text,
+                    branch_default_instruction=request.branch_default_instruction,
+                )
+            )
+        else:
+            node_specific = request.node_specific_instruction
+            tree_default = request.tree_default_instruction
+            additive = (
+                request.node_additive_instruction
+                if "node_additive_instruction" in request.model_fields_set
+                else UNSET
+            )
 
         node = await repo.update_node_instruction(
             node,
-            node_specific_instruction=request.node_specific_instruction,
-            tree_default_instruction=request.tree_default_instruction,
+            node_specific_instruction=node_specific,
+            tree_default_instruction=tree_default,
             node_additive_instruction=additive,
         )
-        return _build_node_response(node)
+        return await self._build_node_response_with_effective_instruction(repo, node)
 
     # ── reparent ───────────────────────────────────────────────────────
 
@@ -249,7 +271,7 @@ class NodeService:
             )
 
         node = await repo.reparent_node(node, new_parent_id, new_level, new_order_index)
-        return _build_node_response(node)
+        return await self._build_node_response_with_effective_instruction(repo, node)
 
     # ── reorder ────────────────────────────────────────────────────────
 
@@ -313,7 +335,13 @@ class NodeService:
 
         ids_to_archive = [node_id]
 
-        if request.archive_children:
+        if "archive_children" in request.model_fields_set:
+            archive_children = request.archive_children
+        else:
+            descendant_ids = await _get_descendant_ids(node_id, repo)
+            archive_children = len(descendant_ids) > 0
+
+        if archive_children:
             descendant_ids = await _get_descendant_ids(node_id, repo)
             ids_to_archive.extend(descendant_ids)
 

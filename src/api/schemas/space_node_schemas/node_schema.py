@@ -20,7 +20,7 @@ Instruction fields — three independent columns, resolved by the service layer:
   - node_specific_instruction : current-node-only full override; when set, inherited defaults and
                                 node_additive_instruction are ignored for this node
 
-  Resolution order (see resolve_effective_instruction in build_node.py):
+  Resolution order (see resolve_effective_instruction_parts in build_node.py):
     1. node_specific_instruction set → use only it
     2. else: collect inherited tree_default_instruction chain (root → current node)
              + append this node's node_additive_instruction
@@ -35,6 +35,7 @@ Partial-update semantics for PATCH /nodes/{id}/instruction:
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -98,13 +99,16 @@ class NodeUpdateInstructionRequest(BaseModel):
     """
     Partial update for any combination of the three instruction fields.
 
-    Partial-update semantics (PATCH behaviour):
+    Preferred mentor flow: send instruction_mode + instruction_text +
+    branch_default_instruction and let the service map to DB columns.
+
+    Legacy/direct flow: send node_specific_instruction, tree_default_instruction,
+    and node_additive_instruction with PATCH semantics below.
+
+    Partial-update semantics (direct fields):
       - Field omitted from the JSON body → existing DB value is PRESERVED
       - Field sent as null               → DB value is CLEARED (set to NULL)
       - Field sent with a string         → DB value is WRITTEN
-
-    The service layer uses model_fields_set to distinguish between "not sent"
-    and "sent as null".
 
     Instruction meanings:
       node_specific_instruction  — full override for this node only
@@ -112,6 +116,21 @@ class NodeUpdateInstructionRequest(BaseModel):
       node_additive_instruction  — additive extra for this node only; not inherited
     """
 
+    instruction_mode: Literal["inherit", "extend", "replace"] | None = Field(
+        default=None,
+        description=(
+            "Mentor UI mode. When set, instruction_text and "
+            "branch_default_instruction are mapped to DB columns by the service."
+        ),
+    )
+    instruction_text: str | None = Field(
+        default=None,
+        description="Mode-specific instruction body (extend/replace). Ignored for inherit.",
+    )
+    branch_default_instruction: str | None = Field(
+        default=None,
+        description="tree_default_instruction for this node's branch.",
+    )
     node_specific_instruction: str | None = Field(default=None)
     tree_default_instruction: str | None = Field(default=None)
     node_additive_instruction: str | None = Field(default=None)
@@ -180,6 +199,19 @@ class NodeArchiveRequest(BaseModel):
 # ── Response: Flat Node ────────────────────────────────────────────────────
 
 
+InstructionPartType = Literal["inherited", "branch-default", "extra", "override"]
+
+
+class EffectiveInstructionPart(BaseModel):
+    """One labeled part of the backend-resolved teaching instruction preview."""
+
+    source_node_id: UUID
+    source_node_title: str
+    text: str
+    type: InstructionPartType
+    label: str
+
+
 class NodeResponse(BaseModel):
     """
     Single node as returned from create / rename / reparent endpoints.
@@ -197,6 +229,10 @@ class NodeResponse(BaseModel):
     node_specific_instruction: str | None
     tree_default_instruction: str | None
     node_additive_instruction: str | None
+    effective_instruction: str | None = None
+    effective_instruction_parts: list[EffectiveInstructionPart] = Field(
+        default_factory=list
+    )
     is_primary_learning_unit: bool
     is_active: bool
     created_by: UUID
@@ -229,6 +265,10 @@ class NodeTreeNode(BaseModel):
     node_specific_instruction: str | None
     tree_default_instruction: str | None
     node_additive_instruction: str | None
+    effective_instruction: str | None = None
+    effective_instruction_parts: list[EffectiveInstructionPart] = Field(
+        default_factory=list
+    )
     is_active: bool
     auto_generated: bool
     children: list[NodeTreeNode] = Field(default_factory=list)

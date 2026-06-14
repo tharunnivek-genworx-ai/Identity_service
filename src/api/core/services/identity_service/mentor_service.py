@@ -10,7 +10,6 @@ Endpoints served (Section 3.5.2):
 """
 
 import math
-from typing import cast
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,8 +32,8 @@ from src.api.data.repositories.identity_repository.mentor_repository import (
     MentorRepository,
 )
 from src.api.schemas.identity_schemas.listing_endpoints import (
+    MentorListParams,
     MentorListResponse,
-    PageParams,
 )
 from src.api.schemas.identity_schemas.mentors_schema import (
     MentorCreate,
@@ -42,6 +41,7 @@ from src.api.schemas.identity_schemas.mentors_schema import (
     MentorOut,
     MentorReactivateRequest,
 )
+from src.api.utils.identity_utils.build_mentor import build_mentor_out
 from src.api.utils.password import hash_password
 
 
@@ -84,16 +84,18 @@ class MentorService:
             profile_picture_url=payload.profile_picture_url,
             is_active=payload.is_active,
         )
-        return cast(MentorOut, MentorOut.model_validate(mentor))
+        return build_mentor_out(mentor)
 
-    async def list_mentors(self, params: PageParams) -> MentorListResponse:
+    async def list_mentors(self, params: MentorListParams) -> MentorListResponse:
         repo = MentorRepository(self.session)
         skip = (params.page - 1) * params.limit
-        mentors, total = await repo.get_all(skip=skip, limit=params.limit)
+        mentors, total = await repo.get_all(
+            skip=skip, limit=params.limit, is_active=params.is_active
+        )
         pages = math.ceil(total / params.limit) if total > 0 else 1
 
         return MentorListResponse(
-            items=[MentorOut.model_validate(m) for m in mentors],
+            items=[build_mentor_out(m) for m in mentors],
             total=total,
             page=params.page,
             limit=params.limit,
@@ -105,7 +107,7 @@ class MentorService:
         mentor = await repo.get_by_id(mentor_id)
         if not mentor:
             raise MentorNotFoundException(str(mentor_id))
-        return cast(MentorOut, MentorOut.model_validate(mentor))
+        return build_mentor_out(mentor)
 
     async def deactivate_mentor(
         self,
@@ -137,7 +139,7 @@ class MentorService:
                 )
 
         mentor = await repo.deactivate(mentor)
-        return cast(MentorOut, MentorOut.model_validate(mentor))
+        return build_mentor_out(mentor)
 
     async def reactivate_mentor(
         self,
@@ -155,4 +157,4 @@ class MentorService:
             raise MentorAlreadyActiveException()
 
         mentor = await repo.reactivate(mentor)
-        return cast(MentorOut, MentorOut.model_validate(mentor))
+        return build_mentor_out(mentor)

@@ -11,18 +11,25 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.core.services.identity_service.mentor_service import MentorService
+from src.api.core.services.space_node_service.space_service import SpaceService
 from src.api.data.clients.postgres.database import get_db
 from src.api.rest.routes.dependencies import require_role
 from src.api.schemas.identity_schemas.auth_schema import TokenPayload
 from src.api.schemas.identity_schemas.listing_endpoints import (
+    MentorListParams,
     MentorListResponse,
-    PageParams,
+)
+from src.api.schemas.identity_schemas.listing_endpoints import (
+    PageParams as SpacePageParams,
 )
 from src.api.schemas.identity_schemas.mentors_schema import (
     MentorCreate,
     MentorDeactivateRequest,
     MentorOut,
     MentorReactivateRequest,
+)
+from src.api.schemas.space_node_schemas.space_schema import (
+    AdminMentorSpaceOverviewResponse,
 )
 
 router = APIRouter(prefix="/admin/mentors", tags=["IT Admin"])
@@ -45,12 +52,26 @@ async def create_mentor(
 @router.get("", response_model=MentorListResponse)
 async def list_mentors(
     current_user: ITAdminUser,
-    params: PageParams = Depends(),
+    params: MentorListParams = Depends(),
     db: AsyncSession = Depends(get_db),
 ) -> MentorListResponse:
-    """List all mentor accounts with pagination."""
+    """List mentor accounts with pagination. Optional is_active filter."""
     service = MentorService(db)
     return await service.list_mentors(params)
+
+
+@router.get("/{mentor_id}/spaces", response_model=AdminMentorSpaceOverviewResponse)
+async def list_mentor_spaces(
+    mentor_id: UUID,
+    current_user: ITAdminUser,
+    params: SpacePageParams = Depends(),
+    db: AsyncSession = Depends(get_db),
+) -> AdminMentorSpaceOverviewResponse:
+    """List audit-owned spaces and spaces transferred to this mentor (EC-27)."""
+    service = SpaceService(db)
+    return await service.admin_list_spaces_for_mentor(
+        mentor_id, current_user.role, params
+    )
 
 
 @router.get("/{mentor_id}", response_model=MentorOut)

@@ -67,11 +67,3 @@ class Mentor(Base):
         foreign_keys="TopicNode.created_by",
         back_populates="created_by_mentor",
     )
-
-    @property
-    def department_name(self) -> str | None:
-        return self.department.department_name if self.department else None
-
-    @property
-    def department_code(self) -> str | None:
-        return self.department.department_code if self.department else None

@@ -36,21 +36,32 @@ class DepartmentRepository:
         )
         return cast(Department | None, result.scalars().first())
 
+    async def count_all(self) -> int:
+        result = await self.db.execute(select(func.count()).select_from(Department))
+        return cast(int, result.scalar_one())
+
     async def get_all(
-        self, skip: int = 0, limit: int = 20
+        self,
+        skip: int = 0,
+        limit: int = 20,
+        *,
+        is_active: bool | None = None,
     ) -> tuple[list[Department], int]:
         """Return (page of departments, total count) for paginated listing."""
-        count_result = await self.db.execute(
-            select(func.count()).select_from(Department)
-        )
+        filters = []
+        if is_active is not None:
+            filters.append(Department.is_active.is_(is_active))
+
+        count_stmt = select(func.count()).select_from(Department)
+        list_stmt = select(Department).order_by(Department.created_at.desc())
+        if filters:
+            count_stmt = count_stmt.where(*filters)
+            list_stmt = list_stmt.where(*filters)
+
+        count_result = await self.db.execute(count_stmt)
         total = count_result.scalar_one()
 
-        result = await self.db.execute(
-            select(Department)
-            .order_by(Department.created_at.desc())
-            .offset(skip)
-            .limit(limit)
-        )
+        result = await self.db.execute(list_stmt.offset(skip).limit(limit))
         return result.scalars().all(), total
 
     async def create(

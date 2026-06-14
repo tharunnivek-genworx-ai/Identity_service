@@ -20,8 +20,8 @@ from src.api.schemas.identity_schemas.departments_schema import (
     DepartmentUpdate,
 )
 from src.api.schemas.identity_schemas.listing_endpoints import (
+    DepartmentListParams,
     DepartmentListResponse,
-    PageParams,
 )
 
 router = APIRouter(prefix="/admin/departments", tags=["IT Admin"])
@@ -49,10 +49,10 @@ async def create_department(
 @router.get("", response_model=DepartmentListResponse)
 async def list_departments(
     current_user: ITAdminOrMentorUser,
-    params: PageParams = Depends(),
+    params: DepartmentListParams = Depends(),
     db: AsyncSession = Depends(get_db),
 ) -> DepartmentListResponse:
-    """List all departments with pagination. Default: page=1, limit=20."""
+    """List departments with pagination. Optional is_active filter for dropdowns."""
     service = DepartmentService(db)
     return await service.list_departments(params)
 
