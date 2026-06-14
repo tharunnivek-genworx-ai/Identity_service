@@ -8,7 +8,7 @@ Flow per TDD §3.5.1 and §3.3.1:
   UPDATE  → ownership guard → partial apply → return
   PUBLISH → ownership guard → toggle is_published → return
   TRANSFER→ itadmin only → validate target mentor active → set transferred_to
-  ADD     → ownership guard → skip existing active members → bulk insert
+  ADD     → ownership guard → reject active members (409) → bulk insert/reactivate
   REMOVE  → ownership guard → set is_active = false on membership row
   JOIN    → trainee only → validate invite code → insert membership row
 
@@ -22,6 +22,9 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.api.core.exceptions.identity_exceptions.mentor_exceptions import (
+    MentorNotFoundException,
+)
 from src.api.core.exceptions.space_node_exceptions.space_exceptions import (
     CannotTransferToSameMentorException,
     DepartmentNotFoundException,
@@ -32,6 +35,7 @@ from src.api.core.exceptions.space_node_exceptions.space_exceptions import (
     SpaceNotFoundException,
     SpaceNotPublishedException,
     TraineeAlreadyJoinedViaInviteException,
+    TraineeAlreadyMemberException,
     TraineeNotMemberException,
     TraineeRemovedFromSpaceException,
     TransferTargetNotFoundException,
@@ -39,8 +43,13 @@ from src.api.core.exceptions.space_node_exceptions.space_exceptions import (
 from src.api.data.repositories.space_node_repository.space_repository import (
     SpaceRepository,
 )
-from src.api.schemas.space_node_schemas.space_schema import (
+from src.api.schemas.identity_schemas.listing_endpoints import (
     PageParams,
+)
+from src.api.schemas.space_node_schemas.space_schema import (
+    AdminMentorSpaceOut,
+    AdminMentorSpaceOverviewResponse,
+    AdminMentorTransferredSpaceIn,
     SpaceAddTraineesRequest,
     SpaceCreateRequest,
     SpaceJoinRequest,
@@ -228,12 +237,62 @@ class SpaceService:
         )
         return _build_space_response(space)
 
+    async def admin_list_spaces_for_mentor(
+        self,
+        mentor_id: UUID,
+        role: str,
+        params: PageParams,
+    ) -> AdminMentorSpaceOverviewResponse:
+        """IT Admin space transfer dashboard for a mentor (EC-27)."""
+        _assert_itadmin(role)
+        repo = SpaceRepository(self.session)
+
+        mentor = await repo.get_mentor_by_id(mentor_id)
+        if mentor is None:
+            raise MentorNotFoundException(str(mentor_id))
+
+        skip = (params.page - 1) * params.limit
+        owned, _total = await repo.list_spaces_by_original_owner(
+            mentor_id, skip=skip, limit=params.limit
+        )
+        owned_items = [
+            AdminMentorSpaceOut(
+                **_build_space_response(space).model_dump(),
+                needs_ownership_transfer=_resolve_effective_mentor(space) == mentor_id,
+            )
+            for space in owned
+        ]
+
+        transferred_in = await repo.list_spaces_transferred_to_mentor(mentor_id)
+        original_mentor_cache: dict[UUID, str] = {}
+        transferred_items: list[AdminMentorTransferredSpaceIn] = []
+        for space in transferred_in:
+            original_id = space.mentor_id
+            if original_id not in original_mentor_cache:
+                original = await repo.get_mentor_by_id(original_id)
+                original_mentor_cache[original_id] = (
+                    original.full_name if original is not None else "Unknown mentor"
+                )
+            transferred_items.append(
+                AdminMentorTransferredSpaceIn(
+                    **_build_space_response(space).model_dump(),
+                    needs_ownership_transfer=False,
+                    original_mentor_id=original_id,
+                    original_mentor_name=original_mentor_cache[original_id],
+                )
+            )
+
+        return AdminMentorSpaceOverviewResponse(
+            owned_spaces=owned_items,
+            transferred_in_spaces=transferred_items,
+        )
+
     # ── add trainees ───────────────────────────────────────────────────
 
     async def add_trainees(
         self, space_id: UUID, request: SpaceAddTraineesRequest, user_id: UUID, role: str
     ) -> dict:
-        """Mentor manually adds trainees. Already-active members are skipped.
+        """Mentor manually adds trainees. Active members raise 409.
         Previously removed members (is_active = false) are reactivated."""
         _assert_mentor(role)
         repo = SpaceRepository(self.session)
@@ -245,14 +304,18 @@ class SpaceService:
         _assert_effective_owner(space, user_id)
         _assert_not_archived(space)
 
-        added, skipped = await repo.add_trainees_to_space(
+        for trainee_id in request.trainee_ids:
+            existing = await repo.get_membership(space_id, trainee_id)
+            if existing is not None and existing.is_active:
+                raise TraineeAlreadyMemberException()
+
+        added, _skipped = await repo.add_trainees_to_space(
             space_id, request.trainee_ids, joined_via="manual_add"
         )
 
         return {
             "detail": "Trainees processed.",
             "added": added,
-            "skipped_already_active": skipped,
         }
 
     # ── list trainees ──────────────────────────────────────────────────

@@ -3,8 +3,8 @@
 from collections.abc import AsyncGenerator
 
 from sqlalchemy.engine import URL
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import declarative_base
 
 from src.api.config import dbconfig
 
@@ -40,7 +40,7 @@ engine = create_async_engine(
 
 Base = declarative_base()
 
-SessionLocal = sessionmaker(
+SessionLocal = async_sessionmaker(
     bind=engine,
     autocommit=False,
     autoflush=False,
