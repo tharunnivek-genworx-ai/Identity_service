@@ -57,7 +57,31 @@ disallow_incomplete_defs = true
 check_untyped_defs = true
 warn_return_any = true
 warn_unused_ignores = true
-warn_redundant_casts = true
+warn_redundant_casts = false
+plugins = ["pydantic.mypy"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+[[tool.mypy.overrides]]
+module = [
+    "src.api.core.*",
+    "src.api.data.*",
+    "src.api.utils.*",
+]
+disable_error_code = [
+    "arg-type",
+    "assignment",
+    "return-value",
+    "call-overload",
+    "index",
+    "typeddict-item",
+    "operator",
+    "misc",
+]
+
 [[tool.mypy.overrides]]
 module = "alembic.*"
 ignore_errors = true

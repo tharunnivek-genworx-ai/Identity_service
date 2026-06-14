@@ -20,16 +20,11 @@ Cleanup note:
     Expired tokens are harmless in the blocklist but waste space long-term.
 """
 
-from datetime import UTC, datetime
-
 from sqlalchemy import Column, String
 from sqlalchemy.dialects.postgresql import TIMESTAMP
 
 from src.api.data.clients.postgres.database import Base
-
-
-def utc_now() -> datetime:
-    return datetime.now(UTC)
+from src.api.utils.time import utc_now
 
 
 class RevokedToken(Base):

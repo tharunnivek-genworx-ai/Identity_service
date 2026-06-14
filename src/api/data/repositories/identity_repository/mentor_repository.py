@@ -42,17 +42,34 @@ class MentorRepository:
         )
         return cast(Mentor | None, result.scalars().first())
 
-    async def get_all(self, skip: int = 0, limit: int = 20) -> tuple[list[Mentor], int]:
-        count_result = await self.db.execute(select(func.count()).select_from(Mentor))
-        total = count_result.scalar_one()
+    async def count_all_and_active(self) -> tuple[int, int]:
+        total_result = await self.db.execute(select(func.count()).select_from(Mentor))
+        active_result = await self.db.execute(
+            select(func.count()).select_from(Mentor).where(Mentor.is_active.is_(True))
+        )
+        return total_result.scalar_one(), active_result.scalar_one()
 
-        result = await self.db.execute(
+    async def get_all(
+        self, skip: int = 0, limit: int = 20, *, is_active: bool | None = None
+    ) -> tuple[list[Mentor], int]:
+        filters = []
+        if is_active is not None:
+            filters.append(Mentor.is_active.is_(is_active))
+
+        count_stmt = select(func.count()).select_from(Mentor)
+        list_stmt = (
             select(Mentor)
             .options(selectinload(Mentor.department))
             .order_by(Mentor.created_at.desc())
-            .offset(skip)
-            .limit(limit)
         )
+        if filters:
+            count_stmt = count_stmt.where(*filters)
+            list_stmt = list_stmt.where(*filters)
+
+        count_result = await self.db.execute(count_stmt)
+        total = count_result.scalar_one()
+
+        result = await self.db.execute(list_stmt.offset(skip).limit(limit))
         return result.scalars().all(), total
 
     async def create(
@@ -82,32 +99,40 @@ class MentorRepository:
         )
         self.db.add(mentor)
         await self.db.flush()
+        mentor_id = mentor.mentor_id
         await self.db.commit()
-        await self.db.refresh(mentor)
-        return mentor
+        reloaded = await self.get_by_id(mentor_id)
+        assert reloaded is not None
+        return reloaded
 
     async def update(self, mentor: Mentor, updates: dict) -> Mentor:
+        mentor_id = mentor.mentor_id
         for field, value in updates.items():
             setattr(mentor, field, value)
         mentor.updated_at = datetime.now(UTC)
         await self.db.commit()
-        await self.db.refresh(mentor)
-        return mentor
+        reloaded = await self.get_by_id(mentor_id)
+        assert reloaded is not None
+        return reloaded
 
     async def deactivate(self, mentor: Mentor) -> Mentor:
         """Soft-delete: set is_active=False and stamp deleted_at."""
+        mentor_id = mentor.mentor_id
         mentor.is_active = False
         mentor.deleted_at = datetime.now(UTC)
         mentor.updated_at = datetime.now(UTC)
         await self.db.commit()
-        await self.db.refresh(mentor)
-        return mentor
+        reloaded = await self.get_by_id(mentor_id)
+        assert reloaded is not None
+        return reloaded
 
     async def reactivate(self, mentor: Mentor) -> Mentor:
         """Reverse a soft-delete: set is_active=True and clear deleted_at (EC-29)."""
+        mentor_id = mentor.mentor_id
         mentor.is_active = True
         mentor.deleted_at = None
         mentor.updated_at = datetime.now(UTC)
         await self.db.commit()
-        await self.db.refresh(mentor)
-        return mentor
+        reloaded = await self.get_by_id(mentor_id)
+        assert reloaded is not None
+        return reloaded
