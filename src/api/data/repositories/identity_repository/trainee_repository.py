@@ -32,6 +32,13 @@ class TraineeRepository:
         )
         return cast(Trainee | None, result.scalars().first())
 
+    async def count_all_and_active(self) -> tuple[int, int]:
+        total_result = await self.db.execute(select(func.count()).select_from(Trainee))
+        active_result = await self.db.execute(
+            select(func.count()).select_from(Trainee).where(Trainee.is_active.is_(True))
+        )
+        return total_result.scalar_one(), active_result.scalar_one()
+
     async def get_all(
         self, skip: int = 0, limit: int = 20
     ) -> tuple[list[Trainee], int]:

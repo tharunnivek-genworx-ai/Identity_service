@@ -29,8 +29,8 @@ from src.api.schemas.identity_schemas.departments_schema import (
     DepartmentUpdate,
 )
 from src.api.schemas.identity_schemas.listing_endpoints import (
+    DepartmentListParams,
     DepartmentListResponse,
-    PageParams,
 )
 
 
@@ -62,10 +62,14 @@ class DepartmentService:
         )
         return cast(DepartmentOut, DepartmentOut.model_validate(dept))
 
-    async def list_departments(self, params: PageParams) -> DepartmentListResponse:
+    async def list_departments(
+        self, params: DepartmentListParams
+    ) -> DepartmentListResponse:
         repo = DepartmentRepository(self.session)
         skip = (params.page - 1) * params.limit
-        departments, total = await repo.get_all(skip=skip, limit=params.limit)
+        departments, total = await repo.get_all(
+            skip=skip, limit=params.limit, is_active=params.is_active
+        )
         pages = math.ceil(total / params.limit) if total > 0 else 1
 
         return DepartmentListResponse(

@@ -104,6 +104,25 @@ class NodeRepository:
         )
         return list(result.scalars().all())
 
+    async def get_ancestors(self, node: TopicNode) -> list[TopicNode]:
+        """Return active ancestors ordered from root down to the node's parent."""
+        ancestors: list[TopicNode] = []
+        parent_id = node.parent_id
+
+        while parent_id is not None:
+            parent = await self.get_node_by_id(parent_id)
+            if (
+                parent is None
+                or parent.space_id != node.space_id
+                or not parent.is_active
+            ):
+                break
+            ancestors.append(parent)
+            parent_id = parent.parent_id
+
+        ancestors.reverse()
+        return ancestors
+
     async def get_next_order_index(self, space_id: UUID, parent_id: UUID | None) -> int:
         """Return MAX(order_index) + 1 among siblings. Returns 0 if no siblings."""
         result = await self.db.execute(

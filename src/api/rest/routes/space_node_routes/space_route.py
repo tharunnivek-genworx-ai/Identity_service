@@ -19,8 +19,8 @@ from src.api.core.services.space_node_service.space_service import SpaceService
 from src.api.data.clients.postgres.database import get_db
 from src.api.rest.routes.dependencies import get_current_user
 from src.api.schemas.identity_schemas.auth_schema import TokenPayload
+from src.api.schemas.identity_schemas.listing_endpoints import PageParams
 from src.api.schemas.space_node_schemas.space_schema import (
-    PageParams,
     SpaceAddTraineesRequest,
     SpaceCreateRequest,
     SpaceJoinRequest,
@@ -137,7 +137,7 @@ async def add_trainees(
     current_user: TokenPayload = Depends(get_current_user),
 ) -> dict[str, object]:
     """Mentor manually adds one or more trainees to the space.
-    Already-active members in the batch are silently skipped."""
+    Already-active members receive a 409."""
     service = SpaceService(db)
     return await service.add_trainees(
         space_id, payload, current_user.sub, current_user.role

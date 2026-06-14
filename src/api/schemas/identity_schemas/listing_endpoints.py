@@ -17,6 +17,24 @@ class PageParams(BaseModel):
     limit: int = Field(default=20, ge=1, le=100, description="Items per page, max 100")
 
 
+class DepartmentListParams(PageParams):
+    """Query params for GET /admin/departments with optional active filter."""
+
+    is_active: bool | None = Field(
+        default=None,
+        description="When set, return only active (true) or inactive (false) departments.",
+    )
+
+
+class MentorListParams(PageParams):
+    """Query params for GET /admin/mentors with optional active filter."""
+
+    is_active: bool | None = Field(
+        default=None,
+        description="When set, return only active (true) or inactive (false) mentors.",
+    )
+
+
 class PaginatedResponse[T](BaseModel):
     """
     Generic paginated wrapper. Wrap any Out schema:

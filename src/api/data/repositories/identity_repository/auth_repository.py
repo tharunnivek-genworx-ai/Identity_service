@@ -47,12 +47,6 @@ class AuthRepository:
         )
         return cast(ITAdmin | None, result.scalars().first())
 
-    async def get_mentor_by_id(self, mentor_id: UUID) -> Mentor | None:
-        result = await self.db.execute(
-            select(Mentor).where(Mentor.mentor_id == mentor_id)
-        )
-        return cast(Mentor | None, result.scalars().first())
-
     async def get_trainee_by_id(self, trainee_id: UUID) -> Trainee | None:
         result = await self.db.execute(
             select(Trainee).where(Trainee.trainee_id == trainee_id)

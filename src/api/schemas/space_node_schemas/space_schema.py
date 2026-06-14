@@ -16,13 +16,13 @@ these schemas only carry raw field values.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TypeVar
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-T = TypeVar("T")
-
+from src.api.schemas.identity_schemas.listing_endpoints import (
+    PaginatedResponse,
+)
 
 # ── Create ─────────────────────────────────────────────────────────────────
 
@@ -77,7 +77,8 @@ class SpaceTransferOwnershipRequest(BaseModel):
 class SpaceAddTraineesRequest(BaseModel):
     """
     Mentor manually adds one or more trainees to a space.
-    Duplicate adds (already active members) are silently ignored.
+    Raises 409 if any trainee is already an active member.
+    Previously removed members (is_active = false) are reactivated.
     """
 
     trainee_ids: list[UUID] = Field(..., min_length=1)
@@ -141,27 +142,44 @@ class SpaceResponse(BaseModel):
     archived_at: datetime | None
 
 
-class PageParams(BaseModel):
-    """Reusable query-parameter schema for paginated space list endpoints."""
-
-    page: int = Field(default=1, ge=1, description="Page number, 1-indexed")
-    limit: int = Field(default=20, ge=1, le=100, description="Items per page, max 100")
-
-
-class PaginatedResponse[T](BaseModel):
-    """Generic paginated wrapper for space/topic response payloads."""
-
-    items: list[T]
-    total: int
-    page: int
-    limit: int
-    pages: int
-
-
 class SpaceListResponse(PaginatedResponse[SpaceResponse]):
     """Paginated list of spaces for mentor/trainee dashboards."""
 
     pass
+
+
+class AdminMentorSpaceOut(SpaceResponse):
+    """IT Admin view of a mentor's owned space with transfer eligibility."""
+
+    needs_ownership_transfer: bool = Field(
+        ...,
+        description=(
+            "True when this mentor is still the effective owner and "
+            "ownership should be transferred (EC-27)."
+        ),
+    )
+
+
+class AdminMentorSpaceListResponse(PaginatedResponse[AdminMentorSpaceOut]):
+    """Paginated spaces owned by a mentor (audit mentor_id)."""
+
+    pass
+
+
+class AdminMentorTransferredSpaceIn(AdminMentorSpaceOut):
+    """Space whose effective owner was transferred to the viewed mentor."""
+
+    original_mentor_id: UUID
+    original_mentor_name: str
+
+
+class AdminMentorSpaceOverviewResponse(BaseModel):
+    """IT Admin mentor space transfer dashboard (EC-27)."""
+
+    owned_spaces: list[AdminMentorSpaceOut] = Field(default_factory=list)
+    transferred_in_spaces: list[AdminMentorTransferredSpaceIn] = Field(
+        default_factory=list
+    )
 
 
 class SpaceJoinResponse(BaseModel):

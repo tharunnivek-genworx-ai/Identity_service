@@ -70,6 +70,13 @@ class StudyMaterialVersion(Base):
         nullable=False,
     )
     createdat = Column(TIMESTAMP(timezone=True), nullable=False, default=utc_now)
+    isarchived = Column(Boolean, nullable=False, default=False)
+    archivedat = Column(TIMESTAMP(timezone=True), nullable=True)
+    archivedby = Column(
+        UUID(as_uuid=True),
+        ForeignKey("mentors.mentorid", ondelete="RESTRICT"),
+        nullable=True,
+    )
 
     node = relationship("TopicNode", foreign_keys=[nodeid])
     space = relationship("ESpace", foreign_keys=[spaceid])
