@@ -85,6 +85,40 @@ class SpaceRepository:
         )
         return list(result.scalars().all()), total
 
+    async def list_spaces_by_original_owner(
+        self, mentor_id: UUID, skip: int = 0, limit: int = 100
+    ) -> tuple[list[ESpace], int]:
+        """Paginated active spaces where mentor_id is the audit owner."""
+        filters = and_(ESpace.is_active, ESpace.mentor_id == mentor_id)
+
+        count_result = await self.db.execute(
+            select(func.count()).select_from(ESpace).where(filters)
+        )
+        total = count_result.scalar_one()
+
+        result = await self.db.execute(
+            select(ESpace)
+            .where(filters)
+            .order_by(ESpace.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        return list(result.scalars().all()), total
+
+    async def list_spaces_transferred_to_mentor(self, mentor_id: UUID) -> list[ESpace]:
+        """Active spaces where this mentor is the effective owner via transfer."""
+        result = await self.db.execute(
+            select(ESpace)
+            .where(
+                and_(
+                    ESpace.is_active,
+                    ESpace.transferred_to_mentor_id == mentor_id,
+                )
+            )
+            .order_by(ESpace.updated_at.desc())
+        )
+        return list(result.scalars().all())
+
     async def list_spaces_by_trainee(
         self, trainee_id: UUID, skip: int = 0, limit: int = 20
     ) -> tuple[list[ESpace], int]:

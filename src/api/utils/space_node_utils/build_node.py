@@ -1,77 +1,96 @@
 from uuid import UUID
 
 from src.api.data.models.postgres.e_spaces_trees.topic_nodes import TopicNode
-from src.api.schemas.space_node_schemas.node_schema import NodeResponse, NodeTreeNode
+from src.api.schemas.space_node_schemas.node_schema import (
+    EffectiveInstructionPart,
+    NodeResponse,
+    NodeTreeNode,
+)
 
 # ── Instruction resolver ────────────────────────────────────────────────────────
 
 
-def resolve_effective_instruction(
+def _nonempty(s: str | None) -> str | None:
+    stripped = s.strip() if s else None
+    return stripped if stripped else None
+
+
+def resolve_effective_instruction_parts(
     node: TopicNode,
     ancestors: list[TopicNode],
-) -> str | None:
-    """Return the effective instruction string for *node* given its ancestor chain.
+) -> list[EffectiveInstructionPart]:
+    """Return the labeled instruction parts for *node* using the canonical rules.
 
-    Parameters
-    ----------
-    node:
-        The current node whose effective instruction is being resolved.
-    ancestors:
-        Ordered list of ancestor TopicNode objects from root down to (but NOT
-        including) the current node.  The current node's own
-        node_additive_instruction is appended last; it must NOT appear in
-        this list — that would accidentally add it to descendants.
-
-    Resolution order
-    ----------------
-    1. If node.node_specific_instruction is non-empty → return it alone (full override).
-    2. Otherwise collect tree_default_instruction from each ancestor (root → parent)
-       that is non-empty, then include this node's tree_default_instruction if set,
-       then append this node's node_additive_instruction if set.
-    3. Null, empty-string, and whitespace-only values are silently ignored.
-    4. Parts are joined with two newlines ("\\n\\n") for readability.
-    5. Returns None when no effective instruction is present.
-
-    Business rules
-    --------------
-    - node_additive_instruction is NEVER passed to descendants (callers must not
-      include the parent's additive instruction in the ancestors list for child nodes).
-    - The frontend uses the same logic for its live preview (computed from the
-      in-memory tree passed via the roots prop).
+    ancestors must be ordered root → parent. Only tree_default_instruction is
+    inherited from ancestors; node_additive_instruction applies to the current
+    node only and must never be included in a descendant's ancestor chain.
     """
-
-    def _nonempty(s: str | None) -> str | None:
-        stripped = s.strip() if s else None
-        return stripped if stripped else None
 
     # Rule 1: node-specific override
     nsi = _nonempty(node.node_specific_instruction)
     if nsi:
-        return nsi
+        return [
+            EffectiveInstructionPart(
+                source_node_id=node.node_id,
+                source_node_title=node.title,
+                text=nsi,
+                type="override",
+                label="Your custom instruction:",
+            )
+        ]
 
-    # Rule 2: inherited treedefault chain + this node's additive
-    parts: list[str] = []
+    # Rule 2: inherited tree-default chain + current node defaults/additive.
+    parts: list[EffectiveInstructionPart] = []
 
     for ancestor in ancestors:
         val = _nonempty(ancestor.tree_default_instruction)
         if val:
-            parts.append(val)
+            parts.append(
+                EffectiveInstructionPart(
+                    source_node_id=ancestor.node_id,
+                    source_node_title=ancestor.title,
+                    text=val,
+                    type="inherited",
+                    label=f"From parent section ({ancestor.title}):",
+                )
+            )
 
     current_tdi = _nonempty(node.tree_default_instruction)
     if current_tdi:
-        parts.append(current_tdi)
+        parts.append(
+            EffectiveInstructionPart(
+                source_node_id=node.node_id,
+                source_node_title=node.title,
+                text=current_tdi,
+                type="branch-default",
+                label="Instruction for This Topic Branch:",
+            )
+        )
 
     current_nai = _nonempty(node.node_additive_instruction)
     if current_nai:
-        parts.append(current_nai)
+        parts.append(
+            EffectiveInstructionPart(
+                source_node_id=node.node_id,
+                source_node_title=node.title,
+                text=current_nai,
+                type="extra",
+                label="Prompt for this topic:",
+            )
+        )
 
-    return "\n\n".join(parts) if parts else None
+    return parts
 
 
 # ── Response builders ───────────────────────────────────────────────────────────
 
 
-def _build_node_response(node: TopicNode) -> NodeResponse:
+def _build_node_response(
+    node: TopicNode,
+    ancestors: list[TopicNode] | None = None,
+) -> NodeResponse:
+    ancestor_chain = ancestors or []
+    effective_parts = resolve_effective_instruction_parts(node, ancestor_chain)
     return NodeResponse(
         node_id=node.node_id,
         space_id=node.space_id,
@@ -82,6 +101,12 @@ def _build_node_response(node: TopicNode) -> NodeResponse:
         node_specific_instruction=node.node_specific_instruction,
         tree_default_instruction=node.tree_default_instruction,
         node_additive_instruction=node.node_additive_instruction,
+        effective_instruction=(
+            "\n\n".join(part.text for part in effective_parts)
+            if effective_parts
+            else None
+        ),
+        effective_instruction_parts=effective_parts,
         is_primary_learning_unit=node.is_primary_learning_unit,
         is_active=node.is_active,
         created_by=node.created_by,
@@ -95,11 +120,19 @@ def _build_node_response(node: TopicNode) -> NodeResponse:
 
 def _build_tree(nodes: list) -> list[NodeTreeNode]:
     """Build recursive NodeTreeNode tree from a flat list of ORM node objects."""
-    node_map: dict[UUID, NodeTreeNode] = {}
+    node_map: dict[UUID, TopicNode] = {node.node_id: node for node in nodes}
+    children_by_parent: dict[UUID | None, list[TopicNode]] = {}
     roots: list[NodeTreeNode] = []
 
-    for node in sorted(nodes, key=lambda item: item.order_index):
-        node_map[node.node_id] = NodeTreeNode(
+    for node in nodes:
+        children_by_parent.setdefault(node.parent_id, []).append(node)
+
+    for children in children_by_parent.values():
+        children.sort(key=lambda item: item.order_index)
+
+    def build_subtree(node: TopicNode, ancestors: list[TopicNode]) -> NodeTreeNode:
+        effective_parts = resolve_effective_instruction_parts(node, ancestors)
+        tree_node = NodeTreeNode(
             node_id=node.node_id,
             parent_id=node.parent_id,
             title=node.title,
@@ -108,18 +141,23 @@ def _build_tree(nodes: list) -> list[NodeTreeNode]:
             node_specific_instruction=node.node_specific_instruction,
             tree_default_instruction=node.tree_default_instruction,
             node_additive_instruction=node.node_additive_instruction,
+            effective_instruction=(
+                "\n\n".join(part.text for part in effective_parts)
+                if effective_parts
+                else None
+            ),
+            effective_instruction_parts=effective_parts,
             is_active=node.is_active,
             auto_generated=node.auto_generated,
-            children=[],
+            children=[
+                build_subtree(child, [*ancestors, node])
+                for child in children_by_parent.get(node.node_id, [])
+                if child.node_id in node_map
+            ],
         )
+        return tree_node
 
-    for node in nodes:
-        tree_node = node_map[node.node_id]
-        if node.parent_id is None:
-            roots.append(tree_node)
-        else:
-            parent = node_map.get(node.parent_id)
-            if parent:
-                parent.children.append(tree_node)
+    for root_node in children_by_parent.get(None, []):
+        roots.append(build_subtree(root_node, []))
 
     return roots
