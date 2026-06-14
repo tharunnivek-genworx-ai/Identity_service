@@ -1,10 +1,12 @@
 """Environment-backed configuration for the auth backend."""
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Database and JWT settings loaded from environment variables."""
+
+    model_config = SettingsConfigDict(env_file=".env")
 
     database_hostname: str
     database_port: str
@@ -16,11 +18,6 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
     cors_origins: str = "*"
-
-    class Config:
-        """Pydantic settings source configuration."""
-
-        env_file = ".env"
 
 
 settings = Settings()
