@@ -60,6 +60,7 @@ from src.api.schemas.space_node_schemas.space_schema import (
     SpaceRemoveTraineeRequest,
     SpaceResponse,
     SpaceTransferOwnershipRequest,
+    SpaceUnpublishPreviewOut,
     SpaceUpdateRequest,
 )
 from src.api.utils.invite_code import _INVITE_CODE_MAX_ATTEMPTS, _generate_invite_code
@@ -205,6 +206,25 @@ class SpaceService:
 
         space = await repo.set_published(space, request.is_published)
         return _build_space_response(space)
+
+    async def preview_unpublish_space(
+        self, space_id: UUID, user_id: UUID, role: str
+    ) -> SpaceUnpublishPreviewOut:
+        """Return published content counts before espace unpublish."""
+        _assert_mentor(role)
+        repo = SpaceRepository(self.session)
+        space = await repo.get_space_by_id(space_id)
+        if space is None or not space.is_active:
+            raise SpaceNotFoundException()
+        _assert_effective_owner(space, user_id)
+        _assert_not_archived(space)
+
+        material_count = await repo.count_published_materials_in_space(space_id)
+        quiz_count = await repo.count_published_quizzes_in_space(space_id)
+        return SpaceUnpublishPreviewOut(
+            published_material_count=material_count,
+            published_quiz_count=quiz_count,
+        )
 
     # ── transfer ownership ─────────────────────────────────────────────
 
