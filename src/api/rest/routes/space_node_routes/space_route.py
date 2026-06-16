@@ -31,6 +31,7 @@ from src.api.schemas.space_node_schemas.space_schema import (
     SpaceRemoveTraineeRequest,
     SpaceResponse,
     SpaceTransferOwnershipRequest,
+    SpaceUnpublishPreviewOut,
     SpaceUpdateRequest,
 )
 
@@ -84,6 +85,19 @@ async def update_space(
     service = SpaceService(db)
     return await service.update_space(
         space_id, payload, current_user.sub, current_user.role
+    )
+
+
+@router.get("/{space_id}/unpublish-preview", response_model=SpaceUnpublishPreviewOut)
+async def preview_unpublish_space(
+    space_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: TokenPayload = Depends(get_current_user),
+) -> SpaceUnpublishPreviewOut:
+    """Return published content counts before espace unpublish confirmation."""
+    service = SpaceService(db)
+    return await service.preview_unpublish_space(
+        space_id, current_user.sub, current_user.role
     )
 
 

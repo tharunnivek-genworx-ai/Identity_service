@@ -192,9 +192,72 @@ class SpaceRepository:
     async def set_published(self, space: ESpace, is_published: bool) -> ESpace:
         space.is_published = is_published
         space.updated_at = get_current_utc_time()
+
+        if not is_published:
+            from sqlalchemy import update
+
+            from src.api.data.models.postgres.quiz_models.quizzes import Quiz
+            from src.api.data.models.postgres.study_material_models.study_material_versions import (  # noqa: E501
+                StudyMaterialVersion,
+            )
+
+            # Unpublish all study material versions in this space
+            await self.db.execute(
+                update(StudyMaterialVersion)
+                .where(
+                    StudyMaterialVersion.spaceid == space.space_id,
+                    StudyMaterialVersion.ispublished.is_(True),
+                )
+                .values(
+                    ispublished=False,
+                    publishedat=None,
+                    publishedby=None,
+                )
+            )
+            # Unpublish all quizzes in this space
+            await self.db.execute(
+                update(Quiz)
+                .where(
+                    Quiz.space_id == space.space_id,
+                    Quiz.is_published.is_(True),
+                )
+                .values(
+                    is_published=False,
+                    published_at=None,
+                )
+            )
+
         await self.db.commit()
         await self.db.refresh(space)
         return space
+
+    async def count_published_materials_in_space(self, space_id: UUID) -> int:
+        from src.api.data.models.postgres.study_material_models.study_material_versions import (  # noqa: E501
+            StudyMaterialVersion,
+        )
+
+        result = await self.db.execute(
+            select(func.count())
+            .select_from(StudyMaterialVersion)
+            .where(
+                StudyMaterialVersion.spaceid == space_id,
+                StudyMaterialVersion.ispublished.is_(True),
+            )
+        )
+        return int(result.scalar() or 0)
+
+    async def count_published_quizzes_in_space(self, space_id: UUID) -> int:
+        from src.api.data.models.postgres.quiz_models.quizzes import Quiz
+
+        result = await self.db.execute(
+            select(func.count())
+            .select_from(Quiz)
+            .where(
+                Quiz.space_id == space_id,
+                Quiz.is_published.is_(True),
+            )
+        )
+        return int(result.scalar() or 0)
 
     async def set_transferred_mentor(
         self, space: ESpace, transferred_to_mentor_id: UUID
