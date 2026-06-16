@@ -58,6 +58,13 @@ class SpacePublishRequest(BaseModel):
     is_published: bool
 
 
+class SpaceUnpublishPreviewOut(BaseModel):
+    """Counts returned before espace unpublish confirmation."""
+
+    published_material_count: int
+    published_quiz_count: int
+
+
 # ── Ownership Transfer (IT Admin) ──────────────────────────────────────────
 
 
