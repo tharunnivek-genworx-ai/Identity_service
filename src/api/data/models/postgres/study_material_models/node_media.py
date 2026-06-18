@@ -1,3 +1,4 @@
+# C:\CapStone\Identity_service\src\api\data\models\postgres\study_material_models\node_media.py
 import uuid
 
 from sqlalchemy import Column, ForeignKey, Integer, String, Text
@@ -38,15 +39,6 @@ class NodeMedia(Base):
         nullable=False,
     )
 
-    # Phase 2A: populated by LlamaParse image extraction pipeline
-    sourcepdfmaterialid = Column(
-        UUID(as_uuid=True),
-        ForeignKey("referencematerials.materialid", ondelete="RESTRICT"),
-        nullable=True,
-    )
-    sourcepagenumber = Column(Integer, nullable=True)
-
     node = relationship("TopicNode", foreign_keys=[nodeid])
     space = relationship("ESpace", foreign_keys=[spaceid])
     uploaded_by_mentor = relationship("Mentor", foreign_keys=[uploadedby])
-    source_pdf_material = relationship("ReferenceMaterial", back_populates="node_media")

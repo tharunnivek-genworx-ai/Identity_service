@@ -1,4 +1,3 @@
-# src/api/data/repositories/space_node_repository/space_repository.py
 """Repository for all e-learning space DB operations.
 
 Handles:

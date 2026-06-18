@@ -1,4 +1,3 @@
-# src/api/data/repositories/identity_repository/mentor_repository.py
 """Repository for mentor CRUD and lifecycle operations.
 Flush before commit so the caller can read generated fields (UUID, timestamps)
 before the transaction fully closes."""

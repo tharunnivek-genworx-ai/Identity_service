@@ -1,4 +1,3 @@
-# src/api/data/repositories/department_repository.py
 """Repository for department CRUD operations.
 All queries are async. No business logic lives here — only DB access."""
 

@@ -1,7 +1,8 @@
+# C:\CapStone\Identity_service\src\api\data\models\postgres\study_material_models\study_material_versions.py
 import uuid
 
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text
-from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
+from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP, UUID
 from sqlalchemy.orm import relationship
 
 from src.api.data.clients.postgres.database import Base
@@ -77,6 +78,11 @@ class StudyMaterialVersion(Base):
         ForeignKey("mentors.mentorid", ondelete="RESTRICT"),
         nullable=True,
     )
+
+    qcfailedpermanently = Column(
+        Boolean, nullable=False, server_default="false", default=False
+    )
+    qcresult = Column(JSONB, nullable=True)
 
     node = relationship("TopicNode", foreign_keys=[nodeid])
     space = relationship("ESpace", foreign_keys=[spaceid])

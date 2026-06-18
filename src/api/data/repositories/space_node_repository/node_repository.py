@@ -1,4 +1,3 @@
-# src/api/data/repositories/identity_repository/node_repository.py
 """Repository for all topic_nodes DB operations.
 
 Handles:
@@ -26,6 +25,9 @@ from sqlalchemy import and_, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.data.models.postgres.e_spaces_trees.topic_nodes import TopicNode
+from src.api.data.models.postgres.study_material_models.study_material_versions import (
+    StudyMaterialVersion,
+)
 
 
 # Sentinel object — distinct from None, signals "caller did not provide this field"
@@ -83,6 +85,20 @@ class NodeRepository:
             )
         )
         return list(result.scalars().all())
+
+    async def get_nodes_with_published_material(self, space_id: UUID) -> set[UUID]:
+        """Return node IDs that currently have at least one published material row."""
+        result = await self.db.execute(
+            select(StudyMaterialVersion.nodeid)
+            .where(
+                and_(
+                    StudyMaterialVersion.spaceid == space_id,
+                    StudyMaterialVersion.ispublished.is_(True),
+                )
+            )
+            .distinct()
+        )
+        return set(result.scalars().all())
 
     async def get_children(self, parent_id: UUID) -> list[TopicNode]:
         """Fetch all direct children (active and inactive) of a parent node."""

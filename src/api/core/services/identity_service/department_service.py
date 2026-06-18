@@ -1,4 +1,3 @@
-# src/api/core/services/department_service.py
 """Department service: all business logic for IT Admin department management.
 
 Endpoints served (Section 3.5.2):

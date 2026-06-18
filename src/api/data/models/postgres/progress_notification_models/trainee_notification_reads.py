@@ -1,3 +1,4 @@
+# C:\CapStone\Identity_service\src\api\data\models\postgres\progress_notification_models\trainee_notification_reads.py
 import uuid
 
 from sqlalchemy import Column, ForeignKey, Index, String, UniqueConstraint

@@ -1,3 +1,4 @@
+# C:\CapStone\Identity_service\src\api\data\models\postgres\e_spaces_trees\topic_nodes.py
 import uuid
 
 from sqlalchemy import Boolean, Column, ForeignKey, Index, Integer, String, Text

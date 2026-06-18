@@ -1,3 +1,4 @@
+# C:\CapStone\Identity_service\src\api\data\models\postgres\progress_notification_models\trainee_node_progress.py
 import uuid
 
 from sqlalchemy import (

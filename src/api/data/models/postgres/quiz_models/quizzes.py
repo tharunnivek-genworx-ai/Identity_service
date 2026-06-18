@@ -1,7 +1,8 @@
+# C:\CapStone\Identity_service\src\api\data\models\postgres\quiz_models\quizzes.py
 import uuid
 
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
-from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
+from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP, UUID
 from sqlalchemy.orm import relationship
 
 from src.api.data.clients.postgres.database import Base
@@ -39,6 +40,11 @@ class Quiz(Base):
     total_questions = Column("totalquestions", Integer, nullable=False)
     # 'easy', 'medium', 'hard', 'mixed'
     difficulty = Column(String(20), nullable=False, default="mixed")
+
+    qc_failed_permanently = Column(
+        "qcfailedpermanently", Boolean, nullable=False, default=False
+    )
+    qc_result = Column("qcresult", JSONB, nullable=True)
 
     is_published = Column("ispublished", Boolean, nullable=False, default=False)
     published_at = Column("publishedat", TIMESTAMP(timezone=True), nullable=True)
