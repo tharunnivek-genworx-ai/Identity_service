@@ -1,4 +1,4 @@
-# src/api/rest/routes/node_route.py
+# C:\CapStone\Identity_service\src\api\rest\routes\space_node_routes\node_route.py
 """Node (topic tree) routes: create, rename, update instruction,
 reparent, reorder siblings, archive, get tree, get single node.
 
@@ -27,6 +27,7 @@ from src.api.schemas.space_node_schemas.node_schema import (
     NodeResponse,
     NodeTreeResponse,
     NodeUpdateInstructionRequest,
+    TraineeNodeTreeResponse,
 )
 
 router = APIRouter(tags=["Topic Tree"])
@@ -52,12 +53,15 @@ async def create_node(
     )
 
 
-@router.get("/spaces/{space_id}/tree", response_model=NodeTreeResponse)
+@router.get(
+    "/spaces/{space_id}/tree",
+    response_model=NodeTreeResponse | TraineeNodeTreeResponse,
+)
 async def get_tree(
     space_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: TokenPayload = Depends(get_current_user),
-) -> NodeTreeResponse:
+) -> NodeTreeResponse | TraineeNodeTreeResponse:
     """Return the full recursive topic tree for a space.
     Mentor must be effective owner. Trainee must be an active member.
     Only is_active = True nodes are included."""

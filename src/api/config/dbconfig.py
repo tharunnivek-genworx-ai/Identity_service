@@ -1,3 +1,4 @@
+# C:\CapStone\Identity_service\src\api\config\dbconfig.py
 """Environment-backed configuration for the auth backend."""
 
 from pydantic_settings import BaseSettings, SettingsConfigDict

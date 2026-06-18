@@ -167,12 +167,6 @@ class AdminMentorSpaceOut(SpaceResponse):
     )
 
 
-class AdminMentorSpaceListResponse(PaginatedResponse[AdminMentorSpaceOut]):
-    """Paginated spaces owned by a mentor (audit mentor_id)."""
-
-    pass
-
-
 class AdminMentorTransferredSpaceIn(AdminMentorSpaceOut):
     """Space whose effective owner was transferred to the viewed mentor."""
 

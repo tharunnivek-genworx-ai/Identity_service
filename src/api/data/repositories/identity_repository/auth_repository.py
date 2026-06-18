@@ -1,10 +1,8 @@
-# src/api/data/repositories/auth_repository.py
 """Repository for auth operations: multi-role lookup by email across
 itadmins, mentors, and trainees. Each role lives in its own table —
 there is no shared User table in StudyGuru."""
 
 from typing import cast
-from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -39,18 +37,6 @@ class AuthRepository:
 
     async def get_trainee_by_email(self, email: str) -> Trainee | None:
         result = await self.db.execute(select(Trainee).where(Trainee.email == email))
-        return cast(Trainee | None, result.scalars().first())
-
-    async def get_itadmin_by_id(self, itadmin_id: UUID) -> ITAdmin | None:
-        result = await self.db.execute(
-            select(ITAdmin).where(ITAdmin.it_admin_id == itadmin_id)
-        )
-        return cast(ITAdmin | None, result.scalars().first())
-
-    async def get_trainee_by_id(self, trainee_id: UUID) -> Trainee | None:
-        result = await self.db.execute(
-            select(Trainee).where(Trainee.trainee_id == trainee_id)
-        )
         return cast(Trainee | None, result.scalars().first())
 
     # ── Refresh token blocklist (for logout / revocation) ───────────

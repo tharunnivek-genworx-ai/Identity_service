@@ -1,3 +1,4 @@
+# C:\CapStone\Identity_service\src\api\data\models\postgres\study_material_models\pdf_parse_job_nodes.py
 import uuid
 
 from sqlalchemy import Column, ForeignKey, Integer, String

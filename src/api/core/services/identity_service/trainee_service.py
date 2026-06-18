@@ -1,4 +1,4 @@
-# src/api/core/services/trainee_service.py
+# C:\CapStone\Identity_service\src\api\core\services\identity_service\trainee_service.py
 """Trainee service: IT Admin creates, deactivates, reactivates, and lists trainees.
 
 Endpoints served (Section 3.5.2):

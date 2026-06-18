@@ -1,4 +1,4 @@
-# src/api/rest/routes/space_route.py
+# C:\CapStone\Identity_service\src\api\rest\routes\space_node_routes\space_route.py
 """Space routes: create, list, get, update, publish, transfer ownership,
 add trainees, remove trainee, join via invite code.
 
