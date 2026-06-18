@@ -1,4 +1,4 @@
-# src/api/core/services/identity_service/space_service.py
+# C:\CapStone\Identity_service\src\api\core\services\space_node_service\space_service.py
 """Space service: all business logic for e-learning space lifecycle.
 
 Flow per TDD §3.5.1 and §3.3.1:

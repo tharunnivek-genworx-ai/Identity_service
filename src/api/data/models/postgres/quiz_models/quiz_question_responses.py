@@ -1,3 +1,4 @@
+# C:\CapStone\Identity_service\src\api\data\models\postgres\quiz_models\quiz_question_responses.py
 import uuid
 
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, UniqueConstraint
@@ -41,7 +42,7 @@ class QuizQuestionResponse(Base):
 
     # Number of times trainee attempted this specific question within the attempt
     attempt_count = Column("attemptcount", Integer, nullable=False, default=0)
-    # 0 = no hint shown, 1 = hint1 shown, 2 = hint2 shown, 3 = answer + explanation revealed
+    # 0 = no hint shown, 1 = hint1 shown, 2 = hint2 shown, hint3 = most obvious hint shown
     hint_level_reached = Column("hintlevelreached", Integer, nullable=False, default=0)
 
     was_skipped = Column("wasskipped", Boolean, nullable=False, default=False)

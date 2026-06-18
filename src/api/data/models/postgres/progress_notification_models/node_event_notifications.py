@@ -1,3 +1,4 @@
+# C:\CapStone\Identity_service\src\api\data\models\postgres\progress_notification_models\node_event_notifications.py
 import uuid
 
 from sqlalchemy import Column, ForeignKey, Index, String, Text

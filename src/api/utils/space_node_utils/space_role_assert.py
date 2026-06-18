@@ -1,3 +1,4 @@
+# C:\CapStone\Identity_service\src\api\utils\space_node_utils\space_role_assert.py
 from typing import cast
 from uuid import UUID
 

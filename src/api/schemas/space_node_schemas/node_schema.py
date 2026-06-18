@@ -284,3 +284,34 @@ class NodeTreeResponse(BaseModel):
     space_id: UUID
     roots: list[NodeTreeNode]
     total_nodes: int  # count of all is_active nodes in the space
+
+
+class TraineeNodeTreeNode(BaseModel):
+    """Trainee tree node shape with published-material visibility flag."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    node_id: UUID
+    parent_id: UUID | None
+    title: str
+    level: int
+    order_index: int
+    node_specific_instruction: str | None
+    tree_default_instruction: str | None
+    node_additive_instruction: str | None
+    effective_instruction: str | None = None
+    effective_instruction_parts: list[EffectiveInstructionPart] = Field(
+        default_factory=list
+    )
+    is_active: bool
+    auto_generated: bool
+    hasPublishedMaterial: bool
+    children: list[TraineeNodeTreeNode] = Field(default_factory=list)
+
+
+class TraineeNodeTreeResponse(BaseModel):
+    """Trainee tree response with hasPublishedMaterial per node."""
+
+    space_id: UUID
+    roots: list[TraineeNodeTreeNode]
+    total_nodes: int

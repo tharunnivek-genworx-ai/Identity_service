@@ -1,4 +1,3 @@
-# src/api/data/repositories/trainee_repository.py
 """Repository for trainee CRUD and lifecycle operations.
 Mirrors mentor_repository structure — same flush-commit-refresh pattern."""
 

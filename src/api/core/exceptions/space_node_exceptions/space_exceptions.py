@@ -1,4 +1,3 @@
-# src/api/core/exceptions/identity_exceptions/space_exceptions.py
 """HTTP exceptions for e-learning space operations.
 
 All exceptions map to a specific HTTP status and carry a detail string

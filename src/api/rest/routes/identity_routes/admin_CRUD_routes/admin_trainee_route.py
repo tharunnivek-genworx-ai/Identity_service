@@ -1,4 +1,4 @@
-# src/api/rest/routes/admin_trainee_route.py
+# C:\CapStone\Identity_service\src\api\rest\routes\identity_routes\admin_CRUD_routes\admin_trainee_route.py
 """IT Admin trainee routes.
 
 Every route here requires role='itadmin' enforced by require_role().

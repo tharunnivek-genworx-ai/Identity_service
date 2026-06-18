@@ -1,4 +1,4 @@
-# src/api/data/models/revoked_token.py
+# C:\CapStone\Identity_service\src\api\data\models\postgres\Identity_models\revoked_token.py
 """ORM model for the refresh token revocation blocklist.
 
 Why this exists:

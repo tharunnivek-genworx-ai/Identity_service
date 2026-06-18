@@ -1,3 +1,4 @@
+# C:\CapStone\Identity_service\src\api\utils\space_node_utils\node_role_assert.py
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
