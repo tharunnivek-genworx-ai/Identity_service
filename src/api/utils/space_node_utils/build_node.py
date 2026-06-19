@@ -5,6 +5,7 @@ from src.api.schemas.space_node_schemas.node_schema import (
     EffectiveInstructionPart,
     NodeResponse,
     NodeTreeNode,
+    TraineeNodeTreeNode,
 )
 
 # ── Instruction resolver ────────────────────────────────────────────────────────
@@ -118,7 +119,9 @@ def _build_node_response(
     )
 
 
-def _build_tree(nodes: list) -> list[NodeTreeNode]:
+def _build_tree(
+    nodes: list,
+) -> list[NodeTreeNode]:
     """Build recursive NodeTreeNode tree from a flat list of ORM node objects."""
     node_map: dict[UUID, TopicNode] = {node.node_id: node for node in nodes}
     children_by_parent: dict[UUID | None, list[TopicNode]] = {}
@@ -156,6 +159,57 @@ def _build_tree(nodes: list) -> list[NodeTreeNode]:
             ],
         )
         return tree_node
+
+    for root_node in children_by_parent.get(None, []):
+        roots.append(build_subtree(root_node, []))
+
+    return roots
+
+
+def _build_tree_for_trainee(
+    nodes: list,
+    nodes_with_published_material: set[UUID],
+) -> list[TraineeNodeTreeNode]:
+    """Build trainee tree with hasPublishedMaterial per node."""
+    node_map: dict[UUID, TopicNode] = {node.node_id: node for node in nodes}
+    children_by_parent: dict[UUID | None, list[TopicNode]] = {}
+    roots: list[TraineeNodeTreeNode] = []
+
+    for node in nodes:
+        children_by_parent.setdefault(node.parent_id, []).append(node)
+
+    for children in children_by_parent.values():
+        children.sort(key=lambda item: item.order_index)
+
+    def build_subtree(
+        node: TopicNode,
+        ancestors: list[TopicNode],
+    ) -> TraineeNodeTreeNode:
+        effective_parts = resolve_effective_instruction_parts(node, ancestors)
+        return TraineeNodeTreeNode(
+            node_id=node.node_id,
+            parent_id=node.parent_id,
+            title=node.title,
+            level=node.level,
+            order_index=node.order_index,
+            node_specific_instruction=node.node_specific_instruction,
+            tree_default_instruction=node.tree_default_instruction,
+            node_additive_instruction=node.node_additive_instruction,
+            effective_instruction=(
+                "\n\n".join(part.text for part in effective_parts)
+                if effective_parts
+                else None
+            ),
+            effective_instruction_parts=effective_parts,
+            is_active=node.is_active,
+            auto_generated=node.auto_generated,
+            hasPublishedMaterial=node.node_id in nodes_with_published_material,
+            children=[
+                build_subtree(child, [*ancestors, node])
+                for child in children_by_parent.get(node.node_id, [])
+                if child.node_id in node_map
+            ],
+        )
 
     for root_node in children_by_parent.get(None, []):
         roots.append(build_subtree(root_node, []))

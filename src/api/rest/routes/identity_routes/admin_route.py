@@ -1,4 +1,4 @@
-# src/api/rest/routes/admin_route.py
+# src/api/rest/routes/identity_routes/admin_route.py
 """Combined IT Admin router.
 
 Admin routes are split by resource in:

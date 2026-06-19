@@ -1,4 +1,4 @@
-# src/api/core/services/auth_service.py
+# src/api/core/services/identity_service/auth_service.py
 """Auth service: login (all 3 roles), refresh, and logout.
 
 Flow per design doc Section 3.5.1:

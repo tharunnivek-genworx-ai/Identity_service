@@ -1,3 +1,4 @@
+# C:\CapStone\Identity_service\src\api\data\models\postgres\quiz_models\quiz_attempts.py
 import uuid
 
 from sqlalchemy import Column, Float, ForeignKey, Integer, String

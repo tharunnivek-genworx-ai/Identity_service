@@ -49,6 +49,8 @@ from src.api.data.models.postgres.study_material_models import (  # noqa: F401
     node_media,
     pdf_parse_job_nodes,
     pdf_parse_jobs,
+    reference_llamaparse_images,
+    reference_llamaparse_pdf,
     reference_materials,
     study_material_versions,
 )

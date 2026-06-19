@@ -1,3 +1,4 @@
+# C:\CapStone\Identity_service\src\api\data\models\postgres\study_material_models\reference_materials.py
 import uuid
 
 from sqlalchemy import BigInteger, Boolean, Column, ForeignKey, String, Text
@@ -49,7 +50,6 @@ class ReferenceMaterial(Base):
     space = relationship("ESpace", foreign_keys=[spaceid])
     node = relationship("TopicNode", foreign_keys=[nodeid])
     uploaded_by_mentor = relationship("Mentor", foreign_keys=[uploadedby])
-    node_media = relationship("NodeMedia", back_populates="source_pdf_material")
     study_material_versions = relationship(
         "StudyMaterialVersion", back_populates="reference_material"
     )

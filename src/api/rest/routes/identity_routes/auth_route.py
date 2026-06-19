@@ -1,4 +1,4 @@
-# src/api/rest/routes/auth_route.py
+# src/api/rest/routes/identity_routes/auth_route.py
 """Auth routes: login, refresh, logout.
 No role guard needed — these are public endpoints (except logout
 which just needs a valid refresh token in the body)."""

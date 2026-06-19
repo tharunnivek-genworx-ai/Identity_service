@@ -1,3 +1,4 @@
+# C:\CapStone\Identity_service\src\api\data\models\postgres\student_chat_models\chat_messages.py
 import uuid
 
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text

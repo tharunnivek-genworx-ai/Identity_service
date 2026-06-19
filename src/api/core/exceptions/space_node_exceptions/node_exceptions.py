@@ -1,4 +1,4 @@
-# src/api/core/exceptions/identity_exceptions/node_exceptions.py
+# src/api/core/exceptions/space_node_exceptions/node_exceptions.py
 """HTTP exceptions for topic tree (topic_nodes) operations.
 
 Edge cases covered:

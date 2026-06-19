@@ -1,3 +1,4 @@
+# C:\CapStone\Identity_service\src\api\data\models\postgres\progress_notification_models\space_announcements.py
 import uuid
 
 from sqlalchemy import Boolean, Column, ForeignKey, Index, String, Text

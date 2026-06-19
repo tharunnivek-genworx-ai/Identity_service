@@ -1,4 +1,4 @@
-# src/api/core/services/identity_service/node_service.py
+# C:\CapStone\Identity_service\src\api\core\services\space_node_service\node_service.py
 """Node service: all business logic for topic tree management.
 
 Flow per TDD §3.3.1 topic_nodes and §3.5.3:
@@ -48,8 +48,13 @@ from src.api.schemas.space_node_schemas.node_schema import (
     NodeResponse,
     NodeTreeResponse,
     NodeUpdateInstructionRequest,
+    TraineeNodeTreeResponse,
 )
-from src.api.utils.space_node_utils.build_node import _build_node_response, _build_tree
+from src.api.utils.space_node_utils.build_node import (
+    _build_node_response,
+    _build_tree,
+    _build_tree_for_trainee,
+)
 from src.api.utils.space_node_utils.instruction_mode import (
     resolve_instruction_fields_from_mode,
 )
@@ -116,12 +121,27 @@ class NodeService:
 
     async def get_tree(
         self, space_id: UUID, user_id: UUID, role: str
-    ) -> NodeTreeResponse:
+    ) -> NodeTreeResponse | TraineeNodeTreeResponse:
         """Return the full recursive tree for a space. Only active nodes included."""
         await _assert_space_access(self.session, space_id, user_id, role)
 
         repo = NodeRepository(self.session)
         nodes = await repo.get_all_active_nodes(space_id)
+
+        if role == "trainee":
+            nodes_with_published_material = (
+                await repo.get_nodes_with_published_material(space_id)
+            )
+            roots = _build_tree_for_trainee(
+                nodes,
+                nodes_with_published_material=nodes_with_published_material,
+            )
+            return TraineeNodeTreeResponse(
+                space_id=space_id,
+                roots=roots,
+                total_nodes=len(nodes),
+            )
+
         roots = _build_tree(nodes)
 
         return NodeTreeResponse(
