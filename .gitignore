@@ -12,3 +12,4 @@ wheels/
 # Environment variables
 .env
 .env.*
+src/api/data/seed_it_admin.py
