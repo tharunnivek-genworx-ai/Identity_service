@@ -161,21 +161,12 @@ class NodeReparentRequest(BaseModel):
 # ── Reorder ────────────────────────────────────────────────────────────────
 
 
-class NodeReorderItem(BaseModel):
-    """Single item in a bulk sibling reorder payload."""
-
-    node_id: UUID
-    order_index: int = Field(..., ge=0)
-
-
 class NodeReorderRequest(BaseModel):
     """
-    Bulk-update order_index for a set of sibling nodes (same parent_id).
-    All provided node_ids must belong to the same space and same parent.
-    Service validates this before committing.
+    Reorder a sibling node by moving it up or down.
     """
 
-    nodes: list[NodeReorderItem] = Field(..., min_length=1)
+    direction: Literal["up", "down"]
 
 
 # ── Archive ────────────────────────────────────────────────────────────────

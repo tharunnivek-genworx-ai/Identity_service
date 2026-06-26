@@ -166,7 +166,7 @@ class SpaceRepository:
             mentor_id=mentor_id,
             transferred_to_mentor_id=None,
             invite_code=invite_code,
-            is_published=False,
+            is_published=True,
             is_active=True,
             created_at=get_current_utc_time(),
             updated_at=get_current_utc_time(),
