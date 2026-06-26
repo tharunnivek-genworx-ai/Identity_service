@@ -2,7 +2,7 @@
 """Space service: all business logic for e-learning space lifecycle.
 
 Flow per TDD §3.5.1 and §3.3.1:
-  CREATE  → validate dept → generate unique invite code → insert → return
+  CREATE  → validate dept → generate unique invite code → insert (published) → return
   LIST    → filter by effective ownership (mentor) or membership (trainee)
   GET     → ownership/membership guard → return
   UPDATE  → ownership guard → partial apply → return
@@ -106,7 +106,7 @@ class SpaceService:
             raise InviteCodeGenerationFailedException()
 
         space = await repo.create_space(request, user_id, invite_code)
-        return _build_space_response(space)
+        return _build_space_response(space, current_user_id=user_id)
 
     # ── list ───────────────────────────────────────────────────────────
 
@@ -135,7 +135,7 @@ class SpaceService:
         pages = math.ceil(total / params.limit) if total > 0 else 1
 
         return SpaceListResponse(
-            items=[_build_space_response(s) for s in spaces],
+            items=[_build_space_response(s, current_user_id=user_id) for s in spaces],
             total=total,
             page=params.page,
             limit=params.limit,
@@ -163,7 +163,7 @@ class SpaceService:
         else:
             raise SpaceForbiddenException()
 
-        return _build_space_response(space)
+        return _build_space_response(space, current_user_id=user_id)
 
     # ── update ─────────────────────────────────────────────────────────
 
@@ -182,7 +182,7 @@ class SpaceService:
         _assert_not_archived(space)
 
         space = await repo.update_space(space, request)
-        return _build_space_response(space)
+        return _build_space_response(space, current_user_id=user_id)
 
     # ── publish ────────────────────────────────────────────────────────
 
@@ -205,7 +205,7 @@ class SpaceService:
             raise SpaceAlreadyPublishedException()
 
         space = await repo.set_published(space, request.is_published)
-        return _build_space_response(space)
+        return _build_space_response(space, current_user_id=user_id)
 
     async def preview_unpublish_space(
         self, space_id: UUID, user_id: UUID, role: str
@@ -277,8 +277,10 @@ class SpaceService:
         )
         owned_items = [
             AdminMentorSpaceOut(
-                **_build_space_response(space).model_dump(),
-                needs_ownership_transfer=_resolve_effective_mentor(space) == mentor_id,
+                **_build_space_response(space, current_user_id=mentor_id).model_dump(),
+                needs_ownership_transfer=(
+                    _resolve_effective_mentor(space) == mentor_id
+                ),
             )
             for space in owned
         ]
@@ -295,16 +297,25 @@ class SpaceService:
                 )
             transferred_items.append(
                 AdminMentorTransferredSpaceIn(
-                    **_build_space_response(space).model_dump(),
+                    **_build_space_response(
+                        space, current_user_id=mentor_id
+                    ).model_dump(),
                     needs_ownership_transfer=False,
                     original_mentor_id=original_id,
                     original_mentor_name=original_mentor_cache[original_id],
                 )
             )
 
+        # Compute if this mentor has any originally owned spaces that still
+        # need their ownership transferred (i.e. effective owner is still mentor_id).
+        has_pending_transfers = any(
+            item.needs_ownership_transfer for item in owned_items
+        )
+
         return AdminMentorSpaceOverviewResponse(
             owned_spaces=owned_items,
             transferred_in_spaces=transferred_items,
+            has_pending_transfers=has_pending_transfers,
         )
 
     # ── add trainees ───────────────────────────────────────────────────
@@ -410,19 +421,22 @@ class SpaceService:
         if not space.is_published:
             raise SpaceNotPublishedException()
 
-        existing_membership = await repo.get_membership(space.space_id, user_id)
+        space_id = space.space_id
+        space_name = space.space_name
+
+        existing_membership = await repo.get_membership(space_id, user_id)
         if existing_membership and existing_membership.is_active:
             raise TraineeAlreadyJoinedViaInviteException()
         if existing_membership:
             raise TraineeRemovedFromSpaceException()
 
         membership = await repo.create_trainee_membership(
-            space.space_id, user_id, joined_via="invite_code"
+            space_id, user_id, joined_via="invite_code"
         )
 
         return SpaceJoinResponse(
-            space_id=space.space_id,
-            space_name=space.space_name,
+            space_id=space_id,
+            space_name=space_name,
             joined_via=membership.joined_via,
             joined_at=membership.joined_at,
         )

@@ -138,18 +138,17 @@ async def reparent_node(
     )
 
 
-@router.patch("/spaces/{space_id}/nodes/reorder", status_code=status.HTTP_200_OK)
-async def reorder_nodes(
-    space_id: UUID,
+@router.patch("/nodes/{node_id}/reorder", status_code=status.HTTP_200_OK)
+async def reorder_node(
+    node_id: UUID,
     payload: NodeReorderRequest,
     db: AsyncSession = Depends(get_db),
     current_user: TokenPayload = Depends(get_current_user),
 ) -> dict[str, object]:
-    """Bulk-update order_index for a set of sibling nodes under the same parent.
-    All nodes in the payload must be siblings. Partial sibling sets are rejected."""
+    """Reorder a sibling node by moving it up or down."""
     service = NodeService(db)
-    return await service.reorder_nodes(
-        space_id, payload, current_user.sub, current_user.role
+    return await service.reorder_node(
+        node_id, payload, current_user.sub, current_user.role
     )
 
 

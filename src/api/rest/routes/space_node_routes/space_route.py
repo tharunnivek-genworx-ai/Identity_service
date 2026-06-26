@@ -45,7 +45,7 @@ async def create_space(
     current_user: TokenPayload = Depends(get_current_user),
 ) -> SpaceResponse:
     """Mentor creates a new e-learning space under a department.
-    Auto-generates a unique invite code. Space is unpublished by default."""
+    Auto-generates a unique invite code. Space is published on creation."""
     service = SpaceService(db)
     return await service.create_space(payload, current_user.sub, current_user.role)
 

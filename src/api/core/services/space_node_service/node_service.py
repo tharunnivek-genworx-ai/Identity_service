@@ -31,8 +31,6 @@ from src.api.core.exceptions.space_node_exceptions.node_exceptions import (
     NodeNotFoundException,
     NodeParentArchivedException,
     NodeParentSpaceMismatchException,
-    NodeReorderIncompleteException,
-    NodeReorderSiblingMismatchException,
 )
 from src.api.data.models.postgres.e_spaces_trees.topic_nodes import TopicNode
 from src.api.data.repositories.space_node_repository.node_repository import (
@@ -295,45 +293,61 @@ class NodeService:
 
     # ── reorder ────────────────────────────────────────────────────────
 
-    async def reorder_nodes(
-        self, space_id: UUID, request: NodeReorderRequest, user_id: UUID, role: str
+    async def reorder_node(
+        self, node_id: UUID, request: NodeReorderRequest, user_id: UUID, role: str
     ) -> dict:
-        """Bulk-update order_index for siblings. Validates all nodes are siblings
-        and that no sibling is missing from the payload."""
+        """Reorder a node by shifting it up or down among its active siblings."""
         _assert_mentor(role)
-        await _get_space_and_assert_owner(self.session, space_id, user_id)
-
         repo = NodeRepository(self.session)
-        node_ids = [item.node_id for item in request.nodes]
 
-        # Fetch all nodes in the payload
-        nodes = await repo.get_nodes_by_ids(node_ids, space_id)
-        if len(nodes) != len(node_ids):
+        node = await repo.get_node_by_id(node_id)
+        if node is None:
             raise NodeNotFoundException()
 
-        # All must share the same parent_id (sibling check)
-        parent_ids = {n.parent_id for n in nodes}
-        if len(parent_ids) != 1:
-            raise NodeReorderSiblingMismatchException()
+        await _get_space_and_assert_owner(self.session, node.space_id, user_id)
 
-        shared_parent_id = next(iter(parent_ids))
+        if not node.is_active:
+            raise NodeArchivedModificationException()
 
-        # All siblings under that parent must be present in the payload
-        all_siblings = (
-            await repo.get_children(shared_parent_id)
-            if shared_parent_id
-            else await repo.get_root_nodes(space_id)
+        # Fetch all siblings under the same parent
+        siblings = (
+            await repo.get_children(node.parent_id)
+            if node.parent_id
+            else await repo.get_root_nodes(node.space_id)
         )
-        all_sibling_ids = {s.node_id for s in all_siblings if s.is_active}
-        payload_ids = set(node_ids)
-        if all_sibling_ids != payload_ids:
-            raise NodeReorderIncompleteException()
 
-        # Build {node_id: order_index} map and commit
-        order_map = {item.node_id: item.order_index for item in request.nodes}
+        # Filter active siblings and sort them by current order_index
+        active_siblings = sorted(
+            [s for s in siblings if s.is_active], key=lambda s: s.order_index
+        )
+
+        # Find index of current node
+        idx = next(
+            (i for i, s in enumerate(active_siblings) if s.node_id == node_id),
+            -1,
+        )
+        if idx == -1:
+            raise NodeNotFoundException()
+
+        # Swap based on direction
+        if request.direction == "up":
+            if idx > 0:
+                active_siblings[idx], active_siblings[idx - 1] = (
+                    active_siblings[idx - 1],
+                    active_siblings[idx],
+                )
+        elif request.direction == "down":
+            if idx < len(active_siblings) - 1:
+                active_siblings[idx], active_siblings[idx + 1] = (
+                    active_siblings[idx + 1],
+                    active_siblings[idx],
+                )
+
+        # Build {node_id: order_index} map and commit bulk update
+        order_map = {item.node_id: i for i, item in enumerate(active_siblings)}
         await repo.bulk_update_order_index(order_map)
 
-        return {"detail": "Nodes reordered successfully."}
+        return {"detail": "Node reordered successfully."}
 
     # ── archive ────────────────────────────────────────────────────────
 

@@ -147,6 +147,13 @@ class SpaceResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     archived_at: datetime | None
+    is_transferred_away: bool = Field(
+        default=False,
+        description=(
+            "True if ownership of this space has been transferred away "
+            "from the original creator (mentor_id) to another active mentor."
+        ),
+    )
 
 
 class SpaceListResponse(PaginatedResponse[SpaceResponse]):
@@ -180,6 +187,13 @@ class AdminMentorSpaceOverviewResponse(BaseModel):
     owned_spaces: list[AdminMentorSpaceOut] = Field(default_factory=list)
     transferred_in_spaces: list[AdminMentorTransferredSpaceIn] = Field(
         default_factory=list
+    )
+    has_pending_transfers: bool = Field(
+        default=False,
+        description=(
+            "True if this mentor still owns learning spaces (needs_ownership_transfer=True) "
+            "that require transfer to another mentor before this mentor is deactivated."
+        ),
     )
 
 
