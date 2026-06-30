@@ -19,6 +19,7 @@ from src.api.data.clients.postgres.database import get_db
 from src.api.rest.routes.dependencies import get_current_user
 from src.api.schemas.identity_schemas.auth_schema import TokenPayload
 from src.api.schemas.space_node_schemas.node_schema import (
+    NodeArchiveOut,
     NodeArchiveRequest,
     NodeCreateRequest,
     NodeRenameRequest,
@@ -158,7 +159,7 @@ async def archive_node(
     payload: NodeArchiveRequest,
     db: AsyncSession = Depends(get_db),
     current_user: TokenPayload = Depends(get_current_user),
-) -> dict[str, object]:
+) -> NodeArchiveOut:
     """Mentor soft-archives a node (is_active = false). If archive_children = True,
     all descendants are archived recursively. Historical attempts remain readable
     and archived nodes no longer count toward space progress (EC-3)."""

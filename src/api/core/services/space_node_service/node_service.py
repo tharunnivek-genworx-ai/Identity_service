@@ -38,6 +38,7 @@ from src.api.data.repositories.space_node_repository.node_repository import (
     NodeRepository,
 )
 from src.api.schemas.space_node_schemas.node_schema import (
+    NodeArchiveOut,
     NodeArchiveRequest,
     NodeCreateRequest,
     NodeRenameRequest,
@@ -353,7 +354,7 @@ class NodeService:
 
     async def archive_node(
         self, node_id: UUID, request: NodeArchiveRequest, user_id: UUID, role: str
-    ) -> dict:
+    ) -> NodeArchiveOut:
         """Soft-archive a node and optionally all its descendants (EC-3)."""
         _assert_mentor(role)
         repo = NodeRepository(self.session)
@@ -380,7 +381,8 @@ class NodeService:
             ids_to_archive.extend(descendant_ids)
 
         await repo.archive_nodes(ids_to_archive)
-        return {
-            "detail": "Node archived.",
-            "archived_count": len(ids_to_archive),
-        }
+        return NodeArchiveOut(
+            detail="Node archived.",
+            archived_count=len(ids_to_archive),
+            archived_node_ids=ids_to_archive,
+        )

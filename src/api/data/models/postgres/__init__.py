@@ -13,6 +13,11 @@ from src.api.data.models.postgres.e_spaces_trees import (  # noqa: F401
     space_trainees,
     topic_nodes,
 )
+
+# ── Generation checkpoints ────────────────────────────────────────────────────
+from src.api.data.models.postgres.generation import (  # noqa: F401
+    generation_runs,
+)
 from src.api.data.models.postgres.Identity_models import (  # noqa: F401
     departments,
     it_admin,
@@ -21,12 +26,9 @@ from src.api.data.models.postgres.Identity_models import (  # noqa: F401
     trainees,
 )
 
-# ── Progress & notifications ──────────────────────────────────────────────────
+# ── Progress ──────────────────────────────────────────────────────────────────
 from src.api.data.models.postgres.progress_notification_models import (  # noqa: F401
-    node_event_notifications,
-    space_announcements,
     trainee_node_progress,
-    trainee_notification_reads,
     trainee_space_progress,
 )
 
@@ -38,17 +40,9 @@ from src.api.data.models.postgres.quiz_models import (  # noqa: F401
     quizzes,
 )
 
-# ── Student chat ──────────────────────────────────────────────────────────────
-from src.api.data.models.postgres.student_chat_models import (  # noqa: F401
-    chat_messages,
-    chat_sessions,
-)
-
 # ── Study material ────────────────────────────────────────────────────────────
 from src.api.data.models.postgres.study_material_models import (  # noqa: F401
     node_media,
-    pdf_parse_job_nodes,
-    pdf_parse_jobs,
     reference_llamaparse_images,
     reference_llamaparse_pdf,
     reference_materials,

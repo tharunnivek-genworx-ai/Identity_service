@@ -187,6 +187,14 @@ class NodeArchiveRequest(BaseModel):
     )
 
 
+class NodeArchiveOut(BaseModel):
+    """Confirmation after soft-archiving one or more topic nodes."""
+
+    detail: str = "Node archived."
+    archived_count: int
+    archived_node_ids: list[UUID] = Field(default_factory=list)
+
+
 # ── Response: Flat Node ────────────────────────────────────────────────────
 
 
