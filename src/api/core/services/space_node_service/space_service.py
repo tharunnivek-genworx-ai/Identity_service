@@ -30,6 +30,7 @@ from src.api.core.exceptions.space_node_exceptions.space_exceptions import (
     DepartmentNotFoundException,
     InvalidInviteCodeException,
     InviteCodeGenerationFailedException,
+    MentorDepartmentMismatchException,
     SpaceAlreadyPublishedException,
     SpaceForbiddenException,
     SpaceNotFoundException,
@@ -88,10 +89,23 @@ class SpaceService:
         _assert_mentor(role)
         repo = SpaceRepository(self.session)
 
+        mentor = await repo.get_mentor_by_id(user_id)
+        if mentor is None or not mentor.is_active:
+            raise MentorNotFoundException(str(user_id))
+
+        # Always bind spaces to the mentor's assigned department (ignore client input)
+        assigned_department_id = mentor.department_id
+        if request.department_id != assigned_department_id:
+            raise MentorDepartmentMismatchException()
+
         # Validate department exists and is active
-        dept = await repo.get_department_by_id(request.department_id)
+        dept = await repo.get_department_by_id(assigned_department_id)
         if dept is None or not dept.is_active:
             raise DepartmentNotFoundException()
+
+        create_request = request.model_copy(
+            update={"department_id": assigned_department_id}
+        )
 
         # Generate a unique invite code with collision guard
         invite_code = None
@@ -105,7 +119,7 @@ class SpaceService:
         if invite_code is None:
             raise InviteCodeGenerationFailedException()
 
-        space = await repo.create_space(request, user_id, invite_code)
+        space = await repo.create_space(create_request, user_id, invite_code)
         return _build_space_response(space, current_user_id=user_id)
 
     # ── list ───────────────────────────────────────────────────────────

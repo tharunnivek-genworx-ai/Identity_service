@@ -184,6 +184,19 @@ class DepartmentNotFoundException(HTTPException):
         )
 
 
+class MentorDepartmentMismatchException(HTTPException):
+    """
+    Raised when a mentor attempts to create a space under a department
+    other than the one assigned to their account.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only create spaces in your assigned department.",
+        )
+
+
 # ── Ownership Transfer ──────────────────────────────────────────────────────
 
 
