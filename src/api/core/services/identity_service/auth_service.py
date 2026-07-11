@@ -82,11 +82,24 @@ class AuthService:
             expires_delta=timedelta(days=settings.refresh_token_expire_days),
         )
 
+        departmentid: str | None = None
+        department_name: str | None = None
+        department_code: str | None = None
+        if role == "mentor":
+            departmentid = str(user.department_id)
+            dept = user.department
+            if dept is not None:
+                department_name = dept.department_name
+                department_code = dept.department_code
+
         return LoginResponse(
             access_token=access_token,
             refresh_token=refresh_token,
             expires_in_minutes=settings.access_token_expire_minutes,
             refresh_token_expires_in_days=settings.refresh_token_expire_days,
+            departmentid=departmentid,
+            department_name=department_name,
+            department_code=department_code,
         )
 
     async def refresh(self, request: RefreshRequest) -> dict:

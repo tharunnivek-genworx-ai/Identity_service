@@ -6,6 +6,7 @@ from typing import cast
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.api.data.models.postgres.Identity_models.it_admin import ITAdmin
 from src.api.data.models.postgres.Identity_models.mentors import Mentor
@@ -32,7 +33,11 @@ class AuthRepository:
         return cast(ITAdmin | None, result.scalars().first())
 
     async def get_mentor_by_email(self, email: str) -> Mentor | None:
-        result = await self.db.execute(select(Mentor).where(Mentor.email == email))
+        result = await self.db.execute(
+            select(Mentor)
+            .where(Mentor.email == email)
+            .options(selectinload(Mentor.department))
+        )
         return cast(Mentor | None, result.scalars().first())
 
     async def get_trainee_by_email(self, email: str) -> Trainee | None:

@@ -40,10 +40,14 @@ class LoginResponse(Token):
     """
     Returned on successful login.
     refresh_token_expires_in_days matches the design doc (7 days).
+    Mentor logins also include assigned department fields for the UI.
     """
 
     refresh_token: str
     refresh_token_expires_in_days: int = 7
+    departmentid: str | None = None
+    department_name: str | None = None
+    department_code: str | None = None
 
 
 class RefreshRequest(BaseModel):
