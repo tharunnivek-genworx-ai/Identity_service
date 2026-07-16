@@ -57,6 +57,12 @@ class QuizAttempt(Base):
         "startedat", TIMESTAMP(timezone=True), nullable=False, default=utc_now
     )
     submitted_at = Column("submittedat", TIMESTAMP(timezone=True), nullable=True)
+    resume_question_id = Column(
+        "resumequestionid",
+        UUID(as_uuid=True),
+        ForeignKey("quizquestions.questionid", ondelete="SET NULL"),
+        nullable=True,
+    )
 
     quiz = relationship("Quiz", back_populates="attempts")
     trainee = relationship("Trainee", foreign_keys=[trainee_id])
