@@ -46,6 +46,8 @@ class QuizQuestionResponse(Base):
     hint_level_reached = Column("hintlevelreached", Integer, nullable=False, default=0)
 
     was_skipped = Column("wasskipped", Boolean, nullable=False, default=False)
+    is_visited = Column("isvisited", Boolean, nullable=False, default=False)
+    is_flagged = Column("isflagged", Boolean, nullable=False, default=False)
     # TRUE once answered correctly — question is locked from further changes
     was_locked = Column("waslocked", Boolean, nullable=False, default=False)
 
