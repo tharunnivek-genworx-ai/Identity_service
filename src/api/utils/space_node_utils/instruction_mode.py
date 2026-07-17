@@ -17,7 +17,9 @@ def resolve_instruction_fields_from_mode(
     branch = (branch_default_instruction or "").strip() or None
 
     if instruction_mode == "replace":
-        return text, None, branch
+        stripped = (instruction_text or "").strip()
+        # Persist "" so empty replace overrides are distinguishable from inherit (null).
+        return stripped if stripped else "", None, branch
     if instruction_mode == "extend":
         return None, text, branch
     return None, None, branch

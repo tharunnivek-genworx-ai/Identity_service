@@ -42,6 +42,7 @@ from src.api.data.models.postgres.quiz_models import (  # noqa: F401
 
 # ── Study material ────────────────────────────────────────────────────────────
 from src.api.data.models.postgres.study_material_models import (  # noqa: F401
+    external_research_reference,
     node_media,
     reference_llamaparse_images,
     reference_llamaparse_pdf,
