@@ -1,0 +1,4 @@
+[
+  "tests/test_reparent_unlocks.py::test_parent_change_clears_moved_node_unlocks",
+  "tests/test_reparent_unlocks.py::test_same_parent_reorder_keeps_unlocks"
+]

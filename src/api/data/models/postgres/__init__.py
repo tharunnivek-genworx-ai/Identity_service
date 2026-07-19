@@ -29,6 +29,7 @@ from src.api.data.models.postgres.Identity_models import (  # noqa: F401
 # ── Progress ──────────────────────────────────────────────────────────────────
 from src.api.data.models.postgres.progress_notification_models import (  # noqa: F401
     trainee_node_progress,
+    trainee_node_unlocks,
     trainee_space_progress,
 )
 

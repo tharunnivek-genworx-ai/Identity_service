@@ -15,6 +15,7 @@ Flow per TDD §3.3.1 topic_nodes and §3.5.3:
                                                to distinguish omit vs null
   REPARENT  → ownership guard → validate no cycle → validate same space
               → recompute level → update parent_id (EC-2)
+              → clear trainee_node_unlocks for the moved node when parent changes
   REORDER   → ownership guard → validate all same parent → bulk update order_index
   ARCHIVE   → ownership guard → set is_active = false → optionally recurse
               to children (EC-3)
@@ -22,6 +23,7 @@ Flow per TDD §3.3.1 topic_nodes and §3.5.3:
 
 from uuid import UUID
 
+from sqlalchemy import and_, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.core.exceptions.space_node_exceptions.node_exceptions import (
@@ -33,6 +35,13 @@ from src.api.core.exceptions.space_node_exceptions.node_exceptions import (
     NodeParentSpaceMismatchException,
 )
 from src.api.data.models.postgres.e_spaces_trees.topic_nodes import TopicNode
+from src.api.data.models.postgres.progress_notification_models.trainee_node_progress import (  # noqa: E501
+    TraineeNodeProgress,
+)
+from src.api.data.models.postgres.progress_notification_models.trainee_node_unlocks import (  # noqa: E501
+    TraineeNodeUnlock,
+)
+from src.api.data.models.postgres.quiz_models.quizzes import Quiz
 from src.api.data.repositories.space_node_repository.node_repository import (
     UNSET,
     NodeRepository,
@@ -65,6 +74,13 @@ from src.api.utils.space_node_utils.node_role_assert import (
 )
 
 
+def should_clear_unlocks_for_reparent(
+    current_parent_id: UUID | None, new_parent_id: UUID | None
+) -> bool:
+    """Only structural parent changes invalidate a moved node's grants."""
+    return current_parent_id != new_parent_id
+
+
 class NodeService:
     def __init__(self, session: AsyncSession):
         self.session = session
@@ -76,6 +92,96 @@ class NodeService:
     ) -> NodeResponse:
         ancestors = await repo.get_ancestors(node)
         return _build_node_response(node, ancestors)
+
+    async def _build_trainee_access_maps(
+        self,
+        *,
+        trainee_id: UUID,
+        space_id: UUID,
+        nodes: list[TopicNode],
+        published_node_ids: set[UUID],
+    ) -> tuple[dict[UUID, str], dict[UUID, UUID]]:
+        """Resolve prerequisite access for the trainee tree from shared DB state."""
+        node_ids = [node.node_id for node in nodes]
+        if not node_ids:
+            return {}, {}
+
+        progress_result = await self.session.execute(
+            select(TraineeNodeProgress).where(
+                and_(
+                    TraineeNodeProgress.trainee_id == trainee_id,
+                    TraineeNodeProgress.space_id == space_id,
+                    TraineeNodeProgress.node_id.in_(node_ids),
+                )
+            )
+        )
+        progress_by_node = {row.node_id: row for row in progress_result.scalars().all()}
+        quiz_result = await self.session.execute(
+            select(Quiz.node_id).where(
+                and_(
+                    Quiz.space_id == space_id,
+                    Quiz.node_id.in_(node_ids),
+                    Quiz.is_published.is_(True),
+                )
+            )
+        )
+        quiz_node_ids = set(quiz_result.scalars().all())
+        unlock_result = await self.session.execute(
+            select(TraineeNodeUnlock.node_id).where(
+                and_(
+                    TraineeNodeUnlock.trainee_id == trainee_id,
+                    TraineeNodeUnlock.space_id == space_id,
+                    TraineeNodeUnlock.node_id.in_(node_ids),
+                )
+            )
+        )
+        unlocked_node_ids = set(unlock_result.scalars().all())
+
+        children_by_parent: dict[UUID | None, list[UUID]] = {}
+        parent_by_node: dict[UUID, UUID | None] = {}
+        for node in nodes:
+            children_by_parent.setdefault(node.parent_id, []).append(node.node_id)
+            parent_by_node[node.node_id] = node.parent_id
+
+        accessible_cache: dict[UUID, bool] = {}
+
+        def has_accessible_content(node_id: UUID) -> bool:
+            if node_id in accessible_cache:
+                return accessible_cache[node_id]
+            result = node_id in published_node_ids or any(
+                has_accessible_content(child_id)
+                for child_id in children_by_parent.get(node_id, [])
+            )
+            accessible_cache[node_id] = result
+            return result
+
+        access_by_node: dict[UUID, str] = {}
+        blocked_by_node: dict[UUID, UUID] = {}
+        for node in nodes:
+            node_id = node.node_id
+            if not has_accessible_content(node_id):
+                access_by_node[node_id] = "coming_soon"
+                continue
+            parent_id = parent_by_node[node_id]
+            if parent_id is None or parent_id not in published_node_ids:
+                access_by_node[node_id] = "available"
+                continue
+            if node_id in unlocked_node_ids:
+                access_by_node[node_id] = "available"
+                continue
+            parent_progress = progress_by_node.get(parent_id)
+            parent_complete = bool(
+                parent_progress
+                and parent_progress.study_material_completed
+                and (parent_id not in quiz_node_ids or parent_progress.quiz_passed)
+            )
+            if parent_complete:
+                access_by_node[node_id] = "available"
+            else:
+                access_by_node[node_id] = "prerequisite_locked"
+                blocked_by_node[node_id] = parent_id
+
+        return access_by_node, blocked_by_node
 
     # ── create ─────────────────────────────────────────────────────────
 
@@ -131,9 +237,17 @@ class NodeService:
             nodes_with_published_material = (
                 await repo.get_nodes_with_published_material(space_id)
             )
+            access_by_node, blocked_by_node = await self._build_trainee_access_maps(
+                trainee_id=user_id,
+                space_id=space_id,
+                nodes=nodes,
+                published_node_ids=nodes_with_published_material,
+            )
             roots = _build_tree_for_trainee(
                 nodes,
                 nodes_with_published_material=nodes_with_published_material,
+                access_by_node=access_by_node,
+                blocked_by_node=blocked_by_node,
             )
             return TraineeNodeTreeResponse(
                 space_id=space_id,
@@ -289,6 +403,13 @@ class NodeService:
                 node.space_id, new_parent_id
             )
 
+        # Structure wins: clear durable unlocks when the parent actually changes
+        # so access is recomputed under the new parent (same-parent reorder does not).
+        if should_clear_unlocks_for_reparent(node.parent_id, new_parent_id):
+            await self.session.execute(
+                delete(TraineeNodeUnlock).where(TraineeNodeUnlock.node_id == node_id)
+            )
+
         node = await repo.reparent_node(node, new_parent_id, new_level, new_order_index)
         return await self._build_node_response_with_effective_instruction(repo, node)
 
@@ -381,6 +502,13 @@ class NodeService:
             ids_to_archive.extend(descendant_ids)
 
         await repo.archive_nodes(ids_to_archive)
+        # Soft-archive leaves FK targets intact; clear grants so soft-deleted
+        # nodes do not retain unlock rows that would block hard deletes later.
+        await self.session.execute(
+            delete(TraineeNodeUnlock).where(
+                TraineeNodeUnlock.node_id.in_(ids_to_archive)
+            )
+        )
         return NodeArchiveOut(
             detail="Node archived.",
             archived_count=len(ids_to_archive),

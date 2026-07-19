@@ -169,8 +169,12 @@ def _build_tree(
 def _build_tree_for_trainee(
     nodes: list,
     nodes_with_published_material: set[UUID],
+    access_by_node: dict[UUID, str] | None = None,
+    blocked_by_node: dict[UUID, UUID] | None = None,
 ) -> list[TraineeNodeTreeNode]:
     """Build trainee tree with hasPublishedMaterial per node."""
+    access_by_node = access_by_node or {}
+    blocked_by_node = blocked_by_node or {}
     node_map: dict[UUID, TopicNode] = {node.node_id: node for node in nodes}
     children_by_parent: dict[UUID | None, list[TopicNode]] = {}
     roots: list[TraineeNodeTreeNode] = []
@@ -186,6 +190,8 @@ def _build_tree_for_trainee(
         ancestors: list[TopicNode],
     ) -> TraineeNodeTreeNode:
         effective_parts = resolve_effective_instruction_parts(node, ancestors)
+        blocker_id = blocked_by_node.get(node.node_id)
+        blocker = node_map.get(blocker_id) if blocker_id else None
         return TraineeNodeTreeNode(
             node_id=node.node_id,
             parent_id=node.parent_id,
@@ -204,6 +210,10 @@ def _build_tree_for_trainee(
             is_active=node.is_active,
             auto_generated=node.auto_generated,
             hasPublishedMaterial=node.node_id in nodes_with_published_material,
+            access_status=access_by_node.get(node.node_id, "coming_soon"),
+            blocked_by_node_id=blocker_id,
+            blocked_by_title=blocker.title if blocker else None,
+            unlock_message=f"Finish {blocker.title} first" if blocker else None,
             children=[
                 build_subtree(child, [*ancestors, node])
                 for child in children_by_parent.get(node.node_id, [])
