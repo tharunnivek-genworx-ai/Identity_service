@@ -305,6 +305,10 @@ class TraineeNodeTreeNode(BaseModel):
     is_active: bool
     auto_generated: bool
     hasPublishedMaterial: bool
+    access_status: Literal["coming_soon", "prerequisite_locked", "available"]
+    blocked_by_node_id: UUID | None = None
+    blocked_by_title: str | None = None
+    unlock_message: str | None = None
     children: list[TraineeNodeTreeNode] = Field(default_factory=list)
 
 

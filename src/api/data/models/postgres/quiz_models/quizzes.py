@@ -51,6 +51,10 @@ class Quiz(Base):
 
     is_published = Column("ispublished", Boolean, nullable=False, default=False)
     published_at = Column("publishedat", TIMESTAMP(timezone=True), nullable=True)
+    # Mentor-set pass score % (1–100); drives quiz_passed comparisons
+    pass_threshold_percent = Column(
+        "passthresholdpercent", Integer, nullable=False, default=70
+    )
 
     # draft | active | archived | hidden — trainee lifecycle
     lifecycle_status = Column(
